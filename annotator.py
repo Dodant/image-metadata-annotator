@@ -31,10 +31,16 @@ class Annotator(QWidget):
     def __init__(self):
         super().__init__()
         self.fname = '_'
+        self.nowIndex = 0
         self.folderlabel = QLabel(f'Dataset Folder : {self.fname}', self)
+        self.ok_checkbtn = QCheckBox('OK', self)
+        self.info_checkbtn = QCheckBox('Metadata Exists', self)
         self.numberOfImageLabel = QLabel('Number of Images : _  |  Annotated : _')
-        self.numberOfImageLabel.setAlignment(Qt.AlignLeading)
+        self.numberOfImageLabel.setAlignment(Qt.AlignCenter)
         self.fileNumName = QLabel(f'File : #_ | Current File Name : {self.fname}')
+
+        self.pixmap = QPixmap(self.fname)
+        self.lbl_img = QLabel()
 
         self.weatherConditionBtnGroup = QButtonGroup()
         self.clear_btn = QRadioButton('Clear', self)
@@ -55,7 +61,7 @@ class Annotator(QWidget):
 
         self.inOutBtnGroup = QButtonGroup()
         self.indor_btn = QRadioButton('Indoor', self)
-        self.outdr_btn = QRadioButton('outdoor', self)
+        self.outdr_btn = QRadioButton('Outdoor', self)
         self.ioetc_btn = QRadioButton('ETC', self)
 
         self.initUI()
@@ -105,9 +111,9 @@ class Annotator(QWidget):
 
     def createInOutdoorGroup(self):
         vbox = QVBoxLayout()
-        vbox.addWidget(self.indor_btn, alignment=Qt.AlignCenter)
-        vbox.addWidget(self.outdr_btn, alignment=Qt.AlignCenter)
-        vbox.addWidget(self.ioetc_btn, alignment=Qt.AlignCenter)
+        vbox.addWidget(self.indor_btn, alignment=Qt.AlignLeading)
+        vbox.addWidget(self.outdr_btn, alignment=Qt.AlignLeading)
+        vbox.addWidget(self.ioetc_btn, alignment=Qt.AlignLeading)
         groupbox = QGroupBox('Indoor / Outdoor')
         groupbox.setLayout(vbox)
         self.timeStampBtnGroup.setExclusive(True)
@@ -146,28 +152,41 @@ class Annotator(QWidget):
         # nextBtn.clicked.connect(self.goToNextImage)
 
         fhbox = QHBoxLayout()
+        fhbox.addStretch(1)
         fhbox.addWidget(self.folderlabel, alignment=Qt.AlignCenter)
         fhbox.addWidget(folderSelectBtn, alignment=Qt.AlignCenter)
+        fhbox.addWidget(self.ok_checkbtn, alignment=Qt.AlignCenter)
+        fhbox.addWidget(self.info_checkbtn, alignment=Qt.AlignCenter)
+        fhbox.addStretch(1)
 
         mhbox = QHBoxLayout()
+        mhbox.addStretch(1)
         mhbox.addWidget(prevBtn, alignment=Qt.AlignCenter)
+        mhbox.addStretch(1)
         mhbox.addWidget(self.fileNumName, alignment=Qt.AlignCenter)
+        mhbox.addStretch(1)
         mhbox.addWidget(nextBtn, alignment=Qt.AlignCenter)
+        mhbox.addStretch(1)
         mhbox.addWidget(recentBtn, alignment=Qt.AlignCenter)
+        mhbox.addStretch(1)
 
-        timedoorbox = QVBoxLayout()
-        timedoorbox.addWidget(self.createTimeStampGroup(), alignment=Qt.AlignCenter)
-        timedoorbox.addWidget(self.createInOutdoorGroup(), alignment=Qt.AlignCenter)
+        checkgroupbox = QVBoxLayout()
+        checkgroupbox.addWidget(self.createWeatherConditionGroup(), alignment=Qt.AlignCenter)
+        checkgroupbox.addWidget(self.createTimeStampGroup(), alignment=Qt.AlignCenter)
+        checkgroupbox.addWidget(self.createInOutdoorGroup(), alignment=Qt.AlignCenter)
 
         vhbox = QHBoxLayout()
-        vhbox.addWidget(self.createWeatherConditionGroup(), alignment=Qt.AlignCenter)
-        vhbox.addLayout(timedoorbox)
+        vhbox.addWidget(self.lbl_img)
+        vhbox.addLayout(checkgroupbox)
 
         vfbox = QVBoxLayout()
+        vfbox.addStretch(1)
         vfbox.addLayout(fhbox)
         vfbox.addWidget(self.numberOfImageLabel, alignment=Qt.AlignCenter)
         vfbox.addLayout(mhbox)
+        vfbox.addStretch(1)
         vfbox.addLayout(vhbox)
+        vfbox.addStretch(1)
 
         self.setLayout(vfbox)
         self.setWindowTitle('Image Metadata Annotator')
@@ -180,6 +199,22 @@ class Annotator(QWidget):
         cp = QDesktopWidget().availableGeometry().center()
         qr.moveCenter(cp)
         self.move(qr.topLeft())
+
+    def goToPrevImage(self):
+        self.nowIndex -= 1
+        if self.nowIndex < 0: self.nowIndex = len(self.fileLists) - 1
+        self.fname = pth.join(self.fileLists[self.nowIndex], 'IMG', f'{self.imgType}.png')
+        # self.changeImageAtAllOnce()
+
+    def goToNextImage(self):
+        self.nowIndex += 1
+        if self.nowIndex >= len(self.fileLists): self.nowIndex = 0
+        self.fname = pth.join(self.fileLists[self.nowIndex], 'IMG', f'{self.imgType}.png')
+        # self.changeImageAtAllOnce()
+
+    def keyPressEvent(self, e):
+        if e.key() == Qt.Key_A: self.goToPrevImage()
+        if e.key() == Qt.Key_D: self.goToNextImage()
 
 
 if __name__ == '__main__':
