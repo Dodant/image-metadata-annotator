@@ -18,7 +18,7 @@ from datetime import datetime
 
 # import cv2
 import numpy as np
-import pandas as pd
+# import pandas as pd
 
 # import qimage2ndarray as q2n
 from PyQt5.QtCore import Qt
@@ -33,7 +33,7 @@ class Annotator(QWidget):
         self.fname = '_'
         self.folderlabel = QLabel(f'Dataset Folder : {self.fname}', self)
         self.numberOfImageLabel = QLabel('Number of Images : _  |  Annotated : _')
-        self.folderImagePairNumLabel.setAlignment(Qt.AlignLeading)
+        self.numberOfImageLabel.setAlignment(Qt.AlignLeading)
         self.fileNumName = QLabel(f'File : #_ | Current File Name : {self.fname}')
 
         self.weatherConditionBtnGroup = QButtonGroup()
@@ -82,7 +82,7 @@ class Annotator(QWidget):
         self.weatherConditionBtnGroup.addButton(self.overc_btn, 6)
         self.weatherConditionBtnGroup.addButton(self.exsun_btn, 7)
         self.weatherConditionBtnGroup.addButton(self.wcetc_btn, 8)
-        self.weatherConditionBtnGroup.buttonClicked[int].connect(self.btnClicked)
+        # self.weatherConditionBtnGroup.buttonClicked[int].connect(self.btnClicked)
         return groupbox
 
     def createTimeStampGroup(self):
@@ -100,7 +100,7 @@ class Annotator(QWidget):
         self.timeStampBtnGroup.addButton(self.eveng_btn, 3)
         self.timeStampBtnGroup.addButton(self.night_btn, 4)
         self.timeStampBtnGroup.addButton(self.tsetc_btn, 5)
-        self.timeStampBtnGroup.buttonClicked[int].connect(self.btnClicked)
+        # self.timeStampBtnGroup.buttonClicked[int].connect(self.btnClicked)
         return groupbox
 
     def createInOutdoorGroup(self):
@@ -114,7 +114,7 @@ class Annotator(QWidget):
         self.timeStampBtnGroup.addButton(self.indor_btn, 1)
         self.timeStampBtnGroup.addButton(self.outdr_btn, 2)
         self.timeStampBtnGroup.addButton(self.ioetc_btn, 3)
-        self.timeStampBtnGroup.buttonClicked[int].connect(self.btnClicked)
+        # self.timeStampBtnGroup.buttonClicked[int].connect(self.btnClicked)
         return groupbox
 
     def fileDialogOpen(self):
@@ -122,6 +122,16 @@ class Annotator(QWidget):
         options |= QFileDialog.DontUseNativeDialog
         self.fname = QFileDialog.getOpenFileName(self, 'Open File', options=options)[0]
 
+    def extraDialog(self):
+            msgBox = QMessageBox()
+            msgBox.setWindowTitle("Hello Out There")
+            msgBox.setTextFormat(Qt.RichText)
+            msg = "¯\\_(ツ)_/¯ \
+                <br> Copyright (c) 2023 Junggyun Oh. All rights reserved. \
+                <br> Please Report Bug and Additional Requirements Here. And Give Me Star. \
+                <br> => <a href='https://github.com/Dodant/image-metadata-annotator'>Dodant/image-metadata-annotator</a>"
+            msgBox.setText(msg)
+            msgBox.exec()
 
     def initUI(self):
         self.fileDialogOpen()
@@ -132,22 +142,45 @@ class Annotator(QWidget):
         prevBtn = QPushButton('<<< << <', self)
         nextBtn = QPushButton('> >> >>>', self)
         recentBtn = QPushButton('Go to the Most Recently Annotated Image')
-        prevBtn.clicked.connect(self.goToPrevImage)
-        nextBtn.clicked.connect(self.goToNextImage)
+        # prevBtn.clicked.connect(self.goToPrevImage)
+        # nextBtn.clicked.connect(self.goToNextImage)
 
-        prenextBox = QHBoxLayout()
-        prenextBox.addStretch(1)
-        prenextBox.addWidget(prevBtn, alignment=Qt.AlignCenter)
-        prenextBox.addWidget(self.fileNumName, alignment=Qt.AlignCenter)
-        prenextBox.addWidget(nextBtn, alignment=Qt.AlignCenter)
-        prenextBox.addWidget(recentBtn, alignment=Qt.AlignCenter)
-        prenextBox.addStretch(1)
+        fhbox = QHBoxLayout()
+        fhbox.addWidget(self.folderlabel, alignment=Qt.AlignCenter)
+        fhbox.addWidget(folderSelectBtn, alignment=Qt.AlignCenter)
 
-        self.setLayout(vbox)
+        mhbox = QHBoxLayout()
+        mhbox.addWidget(prevBtn, alignment=Qt.AlignCenter)
+        mhbox.addWidget(self.fileNumName, alignment=Qt.AlignCenter)
+        mhbox.addWidget(nextBtn, alignment=Qt.AlignCenter)
+        mhbox.addWidget(recentBtn, alignment=Qt.AlignCenter)
+
+        timedoorbox = QVBoxLayout()
+        timedoorbox.addWidget(self.createTimeStampGroup(), alignment=Qt.AlignCenter)
+        timedoorbox.addWidget(self.createInOutdoorGroup(), alignment=Qt.AlignCenter)
+
+        vhbox = QHBoxLayout()
+        vhbox.addWidget(self.createWeatherConditionGroup(), alignment=Qt.AlignCenter)
+        vhbox.addLayout(timedoorbox)
+
+        vfbox = QVBoxLayout()
+        vfbox.addLayout(fhbox)
+        vfbox.addWidget(self.numberOfImageLabel, alignment=Qt.AlignCenter)
+        vfbox.addLayout(mhbox)
+        vfbox.addLayout(vhbox)
+
+        self.setLayout(vfbox)
         self.setWindowTitle('Image Metadata Annotator')
         self.resize(1000, 800)
         self.center()
         self.show()
+
+    def center(self):
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
+
 
 if __name__ == '__main__':
     viewer = QApplication(sys.argv)
