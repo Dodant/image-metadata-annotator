@@ -24,15 +24,17 @@ import numpy as np
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, QRadioButton, QGroupBox, QHBoxLayout, QVBoxLayout, \
-    QFileDialog, QLabel, QPushButton, QCheckBox, QButtonGroup, QMessageBox, QInputDialog, QSizePolicy
+    QFileDialog, QLabel, QPushButton, QCheckBox, QButtonGroup, QMessageBox, QInputDialog, QSizePolicy, QLineEdit
 
 
 class Annotator(QWidget):
     def __init__(self):
         super().__init__()
-        self.fname = '_'
-        self.nowIndex = 0
-        self.folderlabel = QLabel(f'Dataset Folder : {self.fname}', self)
+        self.fname: str = '_'
+        self.fileLists: list = []
+        self.nowIndex: int = 0
+        self.folderlabel = QLabel(f'Dataset Folder :', self)
+        self.folderInput = QLineEdit(self)
         self.ok_checkbtn = QCheckBox('OK', self)
         self.info_checkbtn = QCheckBox('Metadata Exists', self)
         self.numberOfImageLabel = QLabel('Number of Images : _  |  Annotated : _')
@@ -79,6 +81,7 @@ class Annotator(QWidget):
         vbox.addWidget(self.wcetc_btn, alignment=Qt.AlignLeading)
         groupbox = QGroupBox('Weather Conditions')
         groupbox.setLayout(vbox)
+        groupbox.setFixedSize(150, 230)
         self.weatherConditionBtnGroup.setExclusive(True)
         self.weatherConditionBtnGroup.addButton(self.clear_btn, 1)
         self.weatherConditionBtnGroup.addButton(self.cloud_btn, 2)
@@ -100,6 +103,7 @@ class Annotator(QWidget):
         vbox.addWidget(self.tsetc_btn, alignment=Qt.AlignLeading)
         groupbox = QGroupBox('Time Stamp')
         groupbox.setLayout(vbox)
+        groupbox.setFixedSize(150, 160)
         self.timeStampBtnGroup.setExclusive(True)
         self.timeStampBtnGroup.addButton(self.dawn__btn, 1)
         self.timeStampBtnGroup.addButton(self.mrndy_btn, 2)
@@ -116,6 +120,7 @@ class Annotator(QWidget):
         vbox.addWidget(self.ioetc_btn, alignment=Qt.AlignLeading)
         groupbox = QGroupBox('Indoor / Outdoor')
         groupbox.setLayout(vbox)
+        groupbox.setFixedSize(150,100)
         self.timeStampBtnGroup.setExclusive(True)
         self.timeStampBtnGroup.addButton(self.indor_btn, 1)
         self.timeStampBtnGroup.addButton(self.outdr_btn, 2)
@@ -140,20 +145,20 @@ class Annotator(QWidget):
             msgBox.exec()
 
     def initUI(self):
-        self.fileDialogOpen()
 
-        folderSelectBtn = QPushButton('Open Folder', self)
+        folderSelectBtn = QPushButton('Click', self)
         folderSelectBtn.clicked.connect(self.fileDialogOpen)
 
         prevBtn = QPushButton('<<< << <', self)
         nextBtn = QPushButton('> >> >>>', self)
         recentBtn = QPushButton('Go to the Most Recently Annotated Image')
-        # prevBtn.clicked.connect(self.goToPrevImage)
-        # nextBtn.clicked.connect(self.goToNextImage)
+        prevBtn.clicked.connect(self.goToPrevImage)
+        nextBtn.clicked.connect(self.goToNextImage)
 
         fhbox = QHBoxLayout()
         fhbox.addStretch(1)
         fhbox.addWidget(self.folderlabel, alignment=Qt.AlignCenter)
+        fhbox.addWidget(self.folderInput, alignment=Qt.AlignCenter)
         fhbox.addWidget(folderSelectBtn, alignment=Qt.AlignCenter)
         fhbox.addWidget(self.ok_checkbtn, alignment=Qt.AlignCenter)
         fhbox.addWidget(self.info_checkbtn, alignment=Qt.AlignCenter)
@@ -162,9 +167,7 @@ class Annotator(QWidget):
         mhbox = QHBoxLayout()
         mhbox.addStretch(1)
         mhbox.addWidget(prevBtn, alignment=Qt.AlignCenter)
-        mhbox.addStretch(1)
         mhbox.addWidget(self.fileNumName, alignment=Qt.AlignCenter)
-        mhbox.addStretch(1)
         mhbox.addWidget(nextBtn, alignment=Qt.AlignCenter)
         mhbox.addStretch(1)
         mhbox.addWidget(recentBtn, alignment=Qt.AlignCenter)
