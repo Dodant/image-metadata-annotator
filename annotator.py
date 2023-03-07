@@ -204,8 +204,8 @@ class Annotator(QWidget):
         self.changeImageAndInfo()
 
     def keyPressEvent(self, e):
-        if e.key() == Qt.Key_A: self.goToPrevImage()
-        if e.key() == Qt.Key_D: self.goToNextImage()
+        if e.key() == Qt.Key_A: self.goToImage()
+        if e.key() == Qt.Key_D: self.goToImage()
         if e.key() in [Qt.Key_Enter, Qt.Key_S]: pass
 
 
