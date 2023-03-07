@@ -37,15 +37,12 @@ class Annotator(QWidget):
 
         self.folderlabel = QLabel(f'Dataset Folder :', self)
         self.folderInput = QLineEdit(self)
-        self.folderInput.setFixedWidth(350)
         self.ok_checkbtn = QCheckBox('OK', self)
         self.info_checkbtn = QCheckBox('Metadata Exists', self)
-        self.ok_checkbtn.setEnabled(False)
-        self.info_checkbtn.setEnabled(False)
         self.numberOfImageLabel = QLabel('Number of Images : _  |  Annotated : _')
-        self.numberOfImageLabel.setAlignment(Qt.AlignCenter)
         self.fileNumName = QLabel(f'File : #_ | Current File Name : {self.fname}')
 
+        self.pixmap = QPixmap()
         self.lbl_img = QLabel()
 
         self.weatherConditionBtnGroup = QButtonGroup()
@@ -135,44 +132,54 @@ class Annotator(QWidget):
         groupbox = QGroupBox('Indoor / Outdoor')
         groupbox.setLayout(vbox)
         groupbox.setFixedSize(150,100)
-        self.timeStampBtnGroup.setExclusive(True)
-        self.timeStampBtnGroup.addButton(self.indor_btn, 1)
-        self.timeStampBtnGroup.addButton(self.outdr_btn, 2)
-        self.timeStampBtnGroup.addButton(self.ioetc_btn, 3)
+        self.inOutBtnGroup.setExclusive(True)
+        self.inOutBtnGroup.addButton(self.indor_btn, 1)
+        self.inOutBtnGroup.addButton(self.outdr_btn, 2)
+        self.inOutBtnGroup.addButton(self.ioetc_btn, 3)
         # self.timeStampBtnGroup.buttonClicked[int].connect(self.btnClicked)
         return groupbox
 
-    def fileDialogOpen(self):
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        self.fname = QFileDialog.getOpenFileName(self, 'Open File', options=options)[0]
-
     def extraDialog(self):
-            msgBox = QMessageBox()
-            msgBox.setWindowTitle("Hello Out There")
-            msgBox.setTextFormat(Qt.RichText)
-            msg = "¯\\_(ツ)_/¯ \
+        msgBox = QMessageBox()
+        msgBox.setWindowTitle("Hello Out There")
+        msgBox.setTextFormat(Qt.RichText)
+        msg = "¯\\_(ツ)_/¯ \
                 <br> Copyright (c) 2023 Junggyun Oh. All rights reserved. \
                 <br> Please Report Bug and Additional Requirements Here. And Give Me Star. \
                 <br> => <a href='https://github.com/Dodant/image-metadata-annotator'>Dodant/image-metadata-annotator</a>"
-            msgBox.setText(msg)
-            msgBox.exec()
+        msgBox.setText(msg)
+        msgBox.exec()
 
     def folderOpen(self):
         self.filepaths, self.filenames = self.getAllImageFilePath(self.folderInput.text())
         if not self.filepaths:
             msgBox = QMessageBox()
             msgBox.setWindowTitle('Something Went Wrong')
-            msgBox.setText('Check the Directory Paths Once More.')
+            msgBox.setTextFormat(Qt.RichText)
+            msgBox.setText('No Image. <br> Check the Directory Paths Once More.')
             msgBox.exec()
             return
+        self.ok_checkbtn.setChecked(True)
         self.nowIndex = 0
         self.fname = self.filenames[self.nowIndex]
-        self.lbl_img.setPixmap(QPixmap(self.filepaths[0]))
+        self.pixmap = QPixmap(self.filepaths[self.nowIndex]).scaled(1000, 750)
+        self.lbl_img.setPixmap(self.pixmap)
         self.numberOfImageLabel.setText(f'Number of Images : {len(self.filepaths)}  |  Annotated : {0}')
         self.fileNumName.setText(f'File : #{self.nowIndex} | Current File Name : {self.fname}')
 
     def initUI(self):
+
+        self.folderInput.setFixedWidth(350)
+        self.ok_checkbtn.setEnabled(False)
+        self.info_checkbtn.setEnabled(False)
+        self.numberOfImageLabel.setAlignment(Qt.AlignCenter)
+
+        savebtn = QPushButton('Save Metadata', self)
+        savebtn.setFixedWidth(150)
+        # savebtn.clicked.connect(self.saveMetadataToCSV)
+
+        extraBtn = QPushButton('Hello Out There', self)
+        extraBtn.clicked.connect(self.extraDialog)
 
         folderSelectBtn = QPushButton('Click', self)
         folderSelectBtn.clicked.connect(self.folderOpen)
@@ -211,13 +218,12 @@ class Annotator(QWidget):
         checkgroupbox.addWidget(self.createWeatherConditionGroup(), alignment=Qt.AlignCenter)
         checkgroupbox.addWidget(self.createTimeStampGroup(), alignment=Qt.AlignCenter)
         checkgroupbox.addWidget(self.createInOutdoorGroup(), alignment=Qt.AlignCenter)
+        checkgroupbox.addWidget(savebtn, alignment=Qt.AlignCenter)
+        checkgroupbox.addStretch(1)
 
         vhbox = QHBoxLayout()
         vhbox.addWidget(self.lbl_img)
         vhbox.addLayout(checkgroupbox)
-
-        extraBtn = QPushButton('Hello Out There', self)
-        extraBtn.clicked.connect(self.extraDialog)
 
         hhbox = QHBoxLayout()
         hhbox.addStretch(1)
@@ -247,19 +253,23 @@ class Annotator(QWidget):
         self.move(qr.topLeft())
 
     def goToPrevImage(self):
+        if not self.filepaths: return
         self.nowIndex -= 1
         if self.nowIndex < 0: self.nowIndex = len(self.filepaths) - 1
         self.fname = self.filenames[self.nowIndex]
-        self.lbl_img.setPixmap(QPixmap(self.filepaths[self.nowIndex]))
+        self.pixmap = QPixmap(self.filepaths[self.nowIndex]).scaled(1000, 750)
+        self.lbl_img.setPixmap(self.pixmap)
         self.numberOfImageLabel.setText(f'Number of Images : {len(self.filepaths)}  |  Annotated : {0}')
         self.fileNumName.setText(f'File : #{self.nowIndex} | Current File Name : {self.fname}')
         # self.changeImageAtAllOnce()
 
     def goToNextImage(self):
+        if not self.filepaths: return
         self.nowIndex += 1
         if self.nowIndex >= len(self.filepaths): self.nowIndex = 0
         self.fname = self.filenames[self.nowIndex]
-        self.lbl_img.setPixmap(QPixmap(self.filepaths[self.nowIndex]))
+        self.pixmap = QPixmap(self.filepaths[self.nowIndex]).scaled(1000, 750)
+        self.lbl_img.setPixmap(self.pixmap)
         self.numberOfImageLabel.setText(f'Number of Images : {len(self.filepaths)}  |  Annotated : {0}')
         self.fileNumName.setText(f'File : #{self.nowIndex} | Current File Name : {self.fname}')
         # self.changeImageAtAllOnce()
