@@ -7,7 +7,6 @@
 #
 
 import os
-import os.path as pth
 import sys
 import random
 import re
@@ -45,27 +44,13 @@ class Annotator(QWidget):
         self.pixmap = QPixmap()
         self.lbl_img = QLabel()
 
-        self.weatherConditionBtnGroup = QButtonGroup()
-        self.clear_btn = QRadioButton('Clear', self)
-        self.cloud_btn = QRadioButton('Clouds', self)
-        self.rain__btn = QRadioButton('Rain', self)
-        self.foggy_btn = QRadioButton('Foggy', self)
-        self.thder_btn = QRadioButton('Thunder', self)
-        self.overc_btn = QRadioButton('Overcast', self)
-        self.exsun_btn = QRadioButton('Extra Sunny', self)
-        self.wcetc_btn = QRadioButton('ETC', self)
+        self.wthrCndtList = ['Clear', 'Clouds', 'Rain', 'Foggy', 'Thunder', 'Overcast', 'Extra Sunny', 'ETC']
+        self.timeStampList = ['Dawn', 'Morning to Day', 'Evening', 'Night', 'ETC']
+        self.inoutList = ['Indoor', 'Outdoor', 'ETC']
 
+        self.wthrCndtBtnGroup = QButtonGroup()
         self.timeStampBtnGroup = QButtonGroup()
-        self.dawn__btn = QRadioButton('Dawn', self)
-        self.mrndy_btn = QRadioButton('Morning to Day', self)
-        self.eveng_btn = QRadioButton('Evening', self)
-        self.night_btn = QRadioButton('Night', self)
-        self.tsetc_btn = QRadioButton('ETC', self)
-
         self.inOutBtnGroup = QButtonGroup()
-        self.indor_btn = QRadioButton('Indoor', self)
-        self.outdr_btn = QRadioButton('Outdoor', self)
-        self.ioetc_btn = QRadioButton('ETC', self)
 
         self.initUI()
 
@@ -80,63 +65,18 @@ class Annotator(QWidget):
                     filenames.append(file)
         return filepaths, filenames
 
-    def createWeatherConditionGroup(self):
+    @staticmethod
+    def createGroup(title, btnNameList, btnGroup, w, h):
         vbox = QVBoxLayout()
-        vbox.addWidget(self.clear_btn, alignment=Qt.AlignLeading)
-        vbox.addWidget(self.cloud_btn, alignment=Qt.AlignLeading)
-        vbox.addWidget(self.rain__btn, alignment=Qt.AlignLeading)
-        vbox.addWidget(self.foggy_btn, alignment=Qt.AlignLeading)
-        vbox.addWidget(self.thder_btn, alignment=Qt.AlignLeading)
-        vbox.addWidget(self.overc_btn, alignment=Qt.AlignLeading)
-        vbox.addWidget(self.exsun_btn, alignment=Qt.AlignLeading)
-        vbox.addWidget(self.wcetc_btn, alignment=Qt.AlignLeading)
-        groupbox = QGroupBox('Weather Conditions')
+        btnGroup.setExclusive(True)
+        groupbox = QGroupBox(title)
         groupbox.setLayout(vbox)
-        groupbox.setFixedSize(150, 230)
-        self.weatherConditionBtnGroup.setExclusive(True)
-        self.weatherConditionBtnGroup.addButton(self.clear_btn, 1)
-        self.weatherConditionBtnGroup.addButton(self.cloud_btn, 2)
-        self.weatherConditionBtnGroup.addButton(self.rain__btn, 3)
-        self.weatherConditionBtnGroup.addButton(self.foggy_btn, 4)
-        self.weatherConditionBtnGroup.addButton(self.thder_btn, 5)
-        self.weatherConditionBtnGroup.addButton(self.overc_btn, 6)
-        self.weatherConditionBtnGroup.addButton(self.exsun_btn, 7)
-        self.weatherConditionBtnGroup.addButton(self.wcetc_btn, 8)
-        # self.weatherConditionBtnGroup.buttonClicked[int].connect(self.btnClicked)
-        return groupbox
-
-    def createTimeStampGroup(self):
-        vbox = QVBoxLayout()
-        vbox.addWidget(self.dawn__btn, alignment=Qt.AlignLeading)
-        vbox.addWidget(self.mrndy_btn, alignment=Qt.AlignLeading)
-        vbox.addWidget(self.eveng_btn, alignment=Qt.AlignLeading)
-        vbox.addWidget(self.night_btn, alignment=Qt.AlignLeading)
-        vbox.addWidget(self.tsetc_btn, alignment=Qt.AlignLeading)
-        groupbox = QGroupBox('Time Stamp')
-        groupbox.setLayout(vbox)
-        groupbox.setFixedSize(150, 160)
-        self.timeStampBtnGroup.setExclusive(True)
-        self.timeStampBtnGroup.addButton(self.dawn__btn, 1)
-        self.timeStampBtnGroup.addButton(self.mrndy_btn, 2)
-        self.timeStampBtnGroup.addButton(self.eveng_btn, 3)
-        self.timeStampBtnGroup.addButton(self.night_btn, 4)
-        self.timeStampBtnGroup.addButton(self.tsetc_btn, 5)
-        # self.timeStampBtnGroup.buttonClicked[int].connect(self.btnClicked)
-        return groupbox
-
-    def createInOutdoorGroup(self):
-        vbox = QVBoxLayout()
-        vbox.addWidget(self.indor_btn, alignment=Qt.AlignLeading)
-        vbox.addWidget(self.outdr_btn, alignment=Qt.AlignLeading)
-        vbox.addWidget(self.ioetc_btn, alignment=Qt.AlignLeading)
-        groupbox = QGroupBox('Indoor / Outdoor')
-        groupbox.setLayout(vbox)
-        groupbox.setFixedSize(150,100)
-        self.inOutBtnGroup.setExclusive(True)
-        self.inOutBtnGroup.addButton(self.indor_btn, 1)
-        self.inOutBtnGroup.addButton(self.outdr_btn, 2)
-        self.inOutBtnGroup.addButton(self.ioetc_btn, 3)
-        # self.timeStampBtnGroup.buttonClicked[int].connect(self.btnClicked)
+        groupbox.setFixedSize(w, h)
+        for idx, item in enumerate(btnNameList):
+            btn = QRadioButton(item)
+            btnGroup.addButton(QRadioButton(item), idx)
+            vbox.addWidget(btn, alignment=Qt.AlignLeading)
+        # btnGroup.buttonClicked[int].connect(self.btnClicked)
         return groupbox
 
     def extraDialog(self):
@@ -169,6 +109,10 @@ class Annotator(QWidget):
         self.ok_checkbtn.setChecked(True)
         self.nowIndex = 0
         self.changeImageAndInfo()
+
+    # def saveMetadataToCSV(self):
+    #     self.weatherConditionBtnGroup.
+    #     self.
 
     def initUI(self):
 
@@ -218,9 +162,15 @@ class Annotator(QWidget):
         mhbox.addStretch(1)
 
         checkgroupbox = QVBoxLayout()
-        checkgroupbox.addWidget(self.createWeatherConditionGroup(), alignment=Qt.AlignCenter)
-        checkgroupbox.addWidget(self.createTimeStampGroup(), alignment=Qt.AlignCenter)
-        checkgroupbox.addWidget(self.createInOutdoorGroup(), alignment=Qt.AlignCenter)
+        checkgroupbox.addWidget(
+            self.createGroup('Weather Conditions', self.wthrCndtList, self.wthrCndtBtnGroup, 150, 230),
+            alignment=Qt.AlignCenter)
+        checkgroupbox.addWidget(
+            self.createGroup('Time Stamp', self.timeStampList, self.timeStampBtnGroup, 150, 160),
+            alignment=Qt.AlignCenter)
+        checkgroupbox.addWidget(
+            self.createGroup('Indoor / Outdoor', self.inoutList, self.inOutBtnGroup, 150, 100),
+            alignment=Qt.AlignCenter)
         checkgroupbox.addWidget(savebtn, alignment=Qt.AlignCenter)
         checkgroupbox.addStretch(1)
 
