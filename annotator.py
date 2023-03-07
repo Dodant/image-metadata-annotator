@@ -8,22 +8,11 @@
 
 import os
 import sys
-import random
-import re
-import math
-import glob
-import platform
-from datetime import datetime
 
-# import cv2
-import numpy as np
-# import pandas as pd
-
-# import qimage2ndarray as q2n
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, QRadioButton, QGroupBox, QHBoxLayout, QVBoxLayout, \
-    QFileDialog, QLabel, QPushButton, QCheckBox, QButtonGroup, QMessageBox, QInputDialog, QSizePolicy, QLineEdit
+    QLabel, QPushButton, QCheckBox, QButtonGroup, QMessageBox, QLineEdit
 
 
 class Annotator(QWidget):
@@ -79,7 +68,8 @@ class Annotator(QWidget):
         # btnGroup.buttonClicked[int].connect(self.btnClicked)
         return groupbox
 
-    def extraDialog(self):
+    @staticmethod
+    def extraDialog():
         msgBox = QMessageBox()
         msgBox.setWindowTitle("Hello Out There")
         msgBox.setTextFormat(Qt.RichText)
@@ -95,7 +85,7 @@ class Annotator(QWidget):
         self.pixmap = QPixmap(self.filepaths[self.nowIndex]).scaled(1000, 750)
         self.lbl_img.setPixmap(self.pixmap)
         self.numberOfImageLabel.setText(f'Number of Images : {len(self.filepaths)}  |  Annotated : {0}')
-        self.fileNumName.setText(f'File : #{self.nowIndex} | Current File Name : {self.fname}')
+        self.fileNumName.setText(f'File : #{self.nowIndex + 1} | Current File Name : {self.fname}')
 
     def folderOpen(self):
         self.filepaths, self.filenames = self.getAllImageFilePath(self.folderInput.text())
@@ -115,7 +105,6 @@ class Annotator(QWidget):
     #     self.
 
     def initUI(self):
-
         self.folderInput.setFixedWidth(350)
         self.ok_checkbtn.setEnabled(False)
         self.info_checkbtn.setEnabled(False)
@@ -133,9 +122,9 @@ class Annotator(QWidget):
 
         prevBtn = QPushButton('<<< << <', self)
         nextBtn = QPushButton('> >> >>>', self)
-        recentBtn = QPushButton('Go to the Most Recently Annotated Image')
-        prevBtn.clicked.connect(self.goToPrevImage)
-        nextBtn.clicked.connect(self.goToNextImage)
+        recentBtn = QPushButton('Jump to Recently Annotated Image')
+        prevBtn.clicked.connect(self.goToImage)
+        nextBtn.clicked.connect(self.goToImage)
 
         fhbox = QHBoxLayout()
         fhbox.addStretch(1)
@@ -153,13 +142,11 @@ class Annotator(QWidget):
         mbbox.addStretch(1)
 
         mhbox = QHBoxLayout()
-        mhbox.addStretch(1)
         mhbox.addWidget(prevBtn, alignment=Qt.AlignCenter)
-        mhbox.addWidget(self.fileNumName, alignment=Qt.AlignCenter)
         mhbox.addWidget(nextBtn, alignment=Qt.AlignCenter)
+        mhbox.addWidget(self.fileNumName, alignment=Qt.AlignCenter)
         mhbox.addStretch(1)
         mhbox.addWidget(recentBtn, alignment=Qt.AlignCenter)
-        mhbox.addStretch(1)
 
         checkgroupbox = QVBoxLayout()
         checkgroupbox.addWidget(
@@ -205,23 +192,21 @@ class Annotator(QWidget):
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
-    def goToPrevImage(self):
+    def goToImage(self):
         if not self.filepaths: return
-        self.nowIndex -= 1
-        if self.nowIndex < 0: self.nowIndex = len(self.filepaths) - 1
+        sender = self.sender()
+        if sender.text() == '<<< << <':
+            self.nowIndex -= 1
+            if self.nowIndex < 0: self.nowIndex = len(self.filepaths) - 1
+        elif sender.text() == '> >> >>>':
+            self.nowIndex += 1
+            if self.nowIndex >= len(self.filepaths): self.nowIndex = 0
         self.changeImageAndInfo()
-        # self.changeImageAtAllOnce()
-
-    def goToNextImage(self):
-        if not self.filepaths: return
-        self.nowIndex += 1
-        if self.nowIndex >= len(self.filepaths): self.nowIndex = 0
-        self.changeImageAndInfo()
-        # self.changeImageAtAllOnce()
 
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_A: self.goToPrevImage()
         if e.key() == Qt.Key_D: self.goToNextImage()
+        if e.key() in [Qt.Key_Enter, Qt.Key_S]: pass
 
 
 if __name__ == '__main__':
