@@ -31,17 +31,21 @@ class Annotator(QWidget):
     def __init__(self):
         super().__init__()
         self.fname: str = '_'
-        self.fileLists: list = []
+        self.filepaths: list = []
+        self.filenames: list = []
         self.nowIndex: int = 0
+
         self.folderlabel = QLabel(f'Dataset Folder :', self)
         self.folderInput = QLineEdit(self)
+        self.folderInput.setFixedWidth(350)
         self.ok_checkbtn = QCheckBox('OK', self)
         self.info_checkbtn = QCheckBox('Metadata Exists', self)
+        self.ok_checkbtn.setEnabled(False)
+        self.info_checkbtn.setEnabled(False)
         self.numberOfImageLabel = QLabel('Number of Images : _  |  Annotated : _')
         self.numberOfImageLabel.setAlignment(Qt.AlignCenter)
         self.fileNumName = QLabel(f'File : #_ | Current File Name : {self.fname}')
 
-        self.pixmap = QPixmap(self.fname)
         self.lbl_img = QLabel()
 
         self.weatherConditionBtnGroup = QButtonGroup()
@@ -154,10 +158,24 @@ class Annotator(QWidget):
             msgBox.setText(msg)
             msgBox.exec()
 
+    def folderOpen(self):
+        self.filepaths, self.filenames = self.getAllImageFilePath(self.folderInput.text())
+        if not self.filepaths:
+            msgBox = QMessageBox()
+            msgBox.setWindowTitle('Something Went Wrong')
+            msgBox.setText('Check the Directory Paths Once More.')
+            msgBox.exec()
+            return
+        self.nowIndex = 0
+        self.fname = self.filenames[self.nowIndex]
+        self.lbl_img.setPixmap(QPixmap(self.filepaths[0]))
+        self.numberOfImageLabel.setText(f'Number of Images : {len(self.filepaths)}  |  Annotated : {0}')
+        self.fileNumName.setText(f'File : #{self.nowIndex} | Current File Name : {self.fname}')
+
     def initUI(self):
 
         folderSelectBtn = QPushButton('Click', self)
-        folderSelectBtn.clicked.connect(self.fileDialogOpen)
+        folderSelectBtn.clicked.connect(self.folderOpen)
 
         prevBtn = QPushButton('<<< << <', self)
         nextBtn = QPushButton('> >> >>>', self)
@@ -170,9 +188,15 @@ class Annotator(QWidget):
         fhbox.addWidget(self.folderlabel, alignment=Qt.AlignCenter)
         fhbox.addWidget(self.folderInput, alignment=Qt.AlignCenter)
         fhbox.addWidget(folderSelectBtn, alignment=Qt.AlignCenter)
-        fhbox.addWidget(self.ok_checkbtn, alignment=Qt.AlignCenter)
-        fhbox.addWidget(self.info_checkbtn, alignment=Qt.AlignCenter)
         fhbox.addStretch(1)
+
+        mbbox = QHBoxLayout()
+        mbbox.addStretch(1)
+        mbbox.addWidget(self.numberOfImageLabel, alignment=Qt.AlignCenter)
+        mbbox.addStretch(1)
+        mbbox.addWidget(self.ok_checkbtn, alignment=Qt.AlignCenter)
+        mbbox.addWidget(self.info_checkbtn, alignment=Qt.AlignCenter)
+        mbbox.addStretch(1)
 
         mhbox = QHBoxLayout()
         mhbox.addStretch(1)
@@ -192,14 +216,23 @@ class Annotator(QWidget):
         vhbox.addWidget(self.lbl_img)
         vhbox.addLayout(checkgroupbox)
 
+        extraBtn = QPushButton('Hello Out There', self)
+        extraBtn.clicked.connect(self.extraDialog)
+
+        hhbox = QHBoxLayout()
+        hhbox.addStretch(1)
+        hhbox.addWidget(extraBtn, alignment=Qt.AlignCenter)
+        hhbox.addStretch(1)
+
         vfbox = QVBoxLayout()
         vfbox.addStretch(1)
         vfbox.addLayout(fhbox)
-        vfbox.addWidget(self.numberOfImageLabel, alignment=Qt.AlignCenter)
+        vfbox.addLayout(mbbox)
         vfbox.addLayout(mhbox)
         vfbox.addStretch(1)
         vfbox.addLayout(vhbox)
         vfbox.addStretch(1)
+        vfbox.addLayout(hhbox)
 
         self.setLayout(vfbox)
         self.setWindowTitle('Image Metadata Annotator')
@@ -215,14 +248,20 @@ class Annotator(QWidget):
 
     def goToPrevImage(self):
         self.nowIndex -= 1
-        if self.nowIndex < 0: self.nowIndex = len(self.fileLists) - 1
-        self.fname = pth.join(self.fileLists[self.nowIndex], 'IMG', f'{self.imgType}.png')
+        if self.nowIndex < 0: self.nowIndex = len(self.filepaths) - 1
+        self.fname = self.filenames[self.nowIndex]
+        self.lbl_img.setPixmap(QPixmap(self.filepaths[self.nowIndex]))
+        self.numberOfImageLabel.setText(f'Number of Images : {len(self.filepaths)}  |  Annotated : {0}')
+        self.fileNumName.setText(f'File : #{self.nowIndex} | Current File Name : {self.fname}')
         # self.changeImageAtAllOnce()
 
     def goToNextImage(self):
         self.nowIndex += 1
-        if self.nowIndex >= len(self.fileLists): self.nowIndex = 0
-        self.fname = pth.join(self.fileLists[self.nowIndex], 'IMG', f'{self.imgType}.png')
+        if self.nowIndex >= len(self.filepaths): self.nowIndex = 0
+        self.fname = self.filenames[self.nowIndex]
+        self.lbl_img.setPixmap(QPixmap(self.filepaths[self.nowIndex]))
+        self.numberOfImageLabel.setText(f'Number of Images : {len(self.filepaths)}  |  Annotated : {0}')
+        self.fileNumName.setText(f'File : #{self.nowIndex} | Current File Name : {self.fname}')
         # self.changeImageAtAllOnce()
 
     def keyPressEvent(self, e):
