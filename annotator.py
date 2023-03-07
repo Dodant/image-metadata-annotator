@@ -150,6 +150,13 @@ class Annotator(QWidget):
         msgBox.setText(msg)
         msgBox.exec()
 
+    def changeImageAndInfo(self):
+        self.fname = self.filenames[self.nowIndex]
+        self.pixmap = QPixmap(self.filepaths[self.nowIndex]).scaled(1000, 750)
+        self.lbl_img.setPixmap(self.pixmap)
+        self.numberOfImageLabel.setText(f'Number of Images : {len(self.filepaths)}  |  Annotated : {0}')
+        self.fileNumName.setText(f'File : #{self.nowIndex} | Current File Name : {self.fname}')
+
     def folderOpen(self):
         self.filepaths, self.filenames = self.getAllImageFilePath(self.folderInput.text())
         if not self.filepaths:
@@ -161,11 +168,7 @@ class Annotator(QWidget):
             return
         self.ok_checkbtn.setChecked(True)
         self.nowIndex = 0
-        self.fname = self.filenames[self.nowIndex]
-        self.pixmap = QPixmap(self.filepaths[self.nowIndex]).scaled(1000, 750)
-        self.lbl_img.setPixmap(self.pixmap)
-        self.numberOfImageLabel.setText(f'Number of Images : {len(self.filepaths)}  |  Annotated : {0}')
-        self.fileNumName.setText(f'File : #{self.nowIndex} | Current File Name : {self.fname}')
+        self.changeImageAndInfo()
 
     def initUI(self):
 
@@ -256,22 +259,14 @@ class Annotator(QWidget):
         if not self.filepaths: return
         self.nowIndex -= 1
         if self.nowIndex < 0: self.nowIndex = len(self.filepaths) - 1
-        self.fname = self.filenames[self.nowIndex]
-        self.pixmap = QPixmap(self.filepaths[self.nowIndex]).scaled(1000, 750)
-        self.lbl_img.setPixmap(self.pixmap)
-        self.numberOfImageLabel.setText(f'Number of Images : {len(self.filepaths)}  |  Annotated : {0}')
-        self.fileNumName.setText(f'File : #{self.nowIndex} | Current File Name : {self.fname}')
+        self.changeImageAndInfo()
         # self.changeImageAtAllOnce()
 
     def goToNextImage(self):
         if not self.filepaths: return
         self.nowIndex += 1
         if self.nowIndex >= len(self.filepaths): self.nowIndex = 0
-        self.fname = self.filenames[self.nowIndex]
-        self.pixmap = QPixmap(self.filepaths[self.nowIndex]).scaled(1000, 750)
-        self.lbl_img.setPixmap(self.pixmap)
-        self.numberOfImageLabel.setText(f'Number of Images : {len(self.filepaths)}  |  Annotated : {0}')
-        self.fileNumName.setText(f'File : #{self.nowIndex} | Current File Name : {self.fname}')
+        self.changeImageAndInfo()
         # self.changeImageAtAllOnce()
 
     def keyPressEvent(self, e):
