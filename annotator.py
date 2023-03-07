@@ -68,6 +68,16 @@ class Annotator(QWidget):
 
         self.initUI()
 
+    @staticmethod
+    def getAllImageFilePath(folder_path: str) -> (list, list):
+        filepaths, filenames = [], []
+        extensions = ['.jpg', '.jpeg', '.png', '.gif', '.svg', '.tif', '.tiff']
+        for path, dirs, files in os.walk(folder_path):
+            for file in files:
+                if os.path.splitext(file)[1].lower() in extensions:
+                    filepaths.append(os.path.join(path, file))
+                    filenames.append(file)
+        return filepaths, filenames
 
     def createWeatherConditionGroup(self):
         vbox = QVBoxLayout()
