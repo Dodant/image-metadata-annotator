@@ -123,11 +123,12 @@ class Annotator(QWidget):
             writer.writerow(rows)
 
     def initMetadataCSV(self):
+        if os.path.exists(os.path.join('self.folderInput.text()', 'annotation.csv')): pass
         header_list = ['id','image_path','annotated','weather','time','in_out','last_modified']
         with open('annotation.csv','w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(header_list)
-            for idx, item in self.filepaths:
+            for idx, item in enumerate(self.filepaths):
                 writer.writerow([idx, item, False, '', '', '', ''])
 
     def initUI(self):
