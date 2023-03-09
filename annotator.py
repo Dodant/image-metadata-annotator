@@ -22,20 +22,23 @@ class Annotator(QWidget):
         self.filepaths: list = []
         self.filenames: list = []
         self.nowIndex: int = 0
+        self.numberOfAnnotated: int = 0
+        self.isAnnotated: bool = False
 
         self.folderlabel = QLabel(f'Dataset Folder :', self)
         self.folderInput = QLineEdit(self)
         self.ok_checkbtn = QCheckBox('OK', self)
         self.info_checkbtn = QCheckBox('Metadata Exists', self)
-        self.numberOfImageLabel = QLabel('Number of Images : _  |  Annotated : _')
-        self.fileNumName = QLabel(f'File : #_ | Current File Name : {self.fname}')
+        self.numberOfImageLabel = QLabel('No. of Images : _  ||  No. of Annotated File : _  ||  Is Annotated? : _')
+        self.isAnnotatedLbl = QLabel('Annotated')
+        self.fileNumName = QLabel(f'File : #_  ||  Current File Name : {self.fname}')
 
         self.pixmap = QPixmap()
         self.lbl_img = QLabel()
 
-        self.wthrCndtList = ['Clear', 'Clouds', 'Rain', 'Foggy', 'Thunder', 'Overcast', 'Extra Sunny', 'ETC']
-        self.timeStampList = ['Dawn', 'Morning to Day', 'Evening', 'Night', 'ETC']
-        self.inoutList = ['Indoor', 'Outdoor', 'ETC']
+        self.wthrCndtList = ['clear', 'clouds', 'rain', 'foggy', 'thunder', 'overcast', 'extra_sunny', 'etc']
+        self.timeStampList = ['dawn', 'morning_to_day', 'evening', 'night', 'etc']
+        self.inoutList = ['indoor', 'outdoor', 'etc']
 
         self.wthrCndtBtnGroup = QButtonGroup()
         self.timeStampBtnGroup = QButtonGroup()
@@ -44,7 +47,7 @@ class Annotator(QWidget):
         self.initUI()
 
     @staticmethod
-    def getAllImageFilePath(folder_path: str) -> (list, list):
+    def getAllImageFilePath(folder_path:str) -> (list, list):
         filepaths, filenames = [], []
         extensions = ['.jpg', '.jpeg', '.png', '.gif', '.svg', '.tif', '.tiff']
         for path, dirs, files in os.walk(folder_path):
@@ -55,15 +58,16 @@ class Annotator(QWidget):
         return filepaths, filenames
 
     @staticmethod
-    def createGroup(title, btnNameList, btnGroup, w, h):
+    def createGroup(title:str, btnNameList:list, btnGroup, w:int, h:int):
         vbox = QVBoxLayout()
         btnGroup.setExclusive(True)
         groupbox = QGroupBox(title)
         groupbox.setLayout(vbox)
         groupbox.setFixedSize(w, h)
         for idx, item in enumerate(btnNameList):
-            btn = QRadioButton(item)
-            btnGroup.addButton(QRadioButton(item), idx)
+            title = item.replace('_', ' ').title() if item != 'etc' else 'ETC'
+            btn = QRadioButton(title)
+            btnGroup.addButton(btn, idx)
             vbox.addWidget(btn, alignment=Qt.AlignLeading)
         # btnGroup.buttonClicked[int].connect(self.btnClicked)
         return groupbox
@@ -84,8 +88,8 @@ class Annotator(QWidget):
         self.fname = self.filenames[self.nowIndex]
         self.pixmap = QPixmap(self.filepaths[self.nowIndex]).scaled(1000, 750)
         self.lbl_img.setPixmap(self.pixmap)
-        self.numberOfImageLabel.setText(f'Number of Images : {len(self.filepaths)}  |  Annotated : {0}')
-        self.fileNumName.setText(f'File : #{self.nowIndex + 1} | Current File Name : {self.fname}')
+        self.checkAnnotated()
+        self.fileNumName.setText(f'File : #{self.nowIndex + 1}  ||  Current File Name : {self.fname}')
 
     def folderOpen(self):
         self.filepaths, self.filenames = self.getAllImageFilePath(self.folderInput.text())
@@ -100,6 +104,13 @@ class Annotator(QWidget):
         self.nowIndex = 0
         self.changeImageAndInfo()
 
+    def checkAnnotated(self):
+        msg = f'No. of Images : {len(self.filepaths)}  '
+        msg += f'||  No. of Annotated File : {self.numberOfAnnotated}  '
+        msg += f'||  Is Annotated? : {"Y" if self.isAnnotated else "N"}'
+        self.numberOfImageLabel.setText(msg)
+
+    # todo save to file
     # def saveMetadataToCSV(self):
     #     self.weatherConditionBtnGroup.
     #     self.
