@@ -8,6 +8,7 @@
 
 import os
 import sys
+import csv
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
@@ -102,6 +103,7 @@ class Annotator(QWidget):
             return
         self.ok_checkbtn.setChecked(True)
         self.nowIndex = 0
+        self.initMetadataCSV()
         self.changeImageAndInfo()
 
     def checkAnnotated(self):
@@ -110,10 +112,23 @@ class Annotator(QWidget):
         msg += f'||  Is Annotated? : {"Y" if self.isAnnotated else "N"}'
         self.numberOfImageLabel.setText(msg)
 
-    # todo save to file
-    # def saveMetadataToCSV(self):
-    #     self.weatherConditionBtnGroup.
-    #     self.
+    def saveMetadataToCSV(self):
+        new_row_data = [self.nowIndex, self.filepaths[self.nowIndex], False, '', '', '', '']
+        with open('example.csv', 'r') as csvfile:
+            reader = csv.reader(csvfile)
+            rows = list(reader)
+        rows[self.nowIndex+1] = new_row_data
+        with open('annotation.csv','w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(rows)
+
+    def initMetadataCSV(self):
+        header_list = ['id','image_path','annotated','weather','time','in_out','last_modified']
+        with open('annotation.csv','w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(header_list)
+            for idx, item in self.filepaths:
+                writer.writerow([idx, item, False, '', '', '', ''])
 
     def initUI(self):
         self.folderInput.setFixedWidth(350)
