@@ -9,6 +9,7 @@
 import os
 import sys
 import csv
+from datetime import datetime
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
@@ -25,6 +26,7 @@ class Annotator(QWidget):
         self.nowIndex: int = 0
         self.numberOfAnnotated: int = 0
         self.isAnnotated: bool = False
+        self.wthr, self.time, self.door = '', '', ''
 
         self.folderlabel = QLabel(f'Dataset Folder :', self)
         self.folderInput = QLineEdit(self)
@@ -47,6 +49,47 @@ class Annotator(QWidget):
 
         self.initUI()
 
+    def folderOpen(self):
+        self.filepaths, self.filenames = self.getAllImageFilePath(self.folderInput.text())
+        if not self.filepaths:
+            self.warnMsgDialog('No Image. <br> Check the Directory Paths Once More.')
+            return
+        self.ok_checkbtn.setChecked(True)
+        self.nowIndex = 0
+        self.initMetadataCSV()
+        self.changeImageAndInfo()
+
+    def initMetadataCSV(self):
+        if os.path.exists(os.path.join(self.folderInput.text(), 'annotation.csv')): pass
+        header_list = ['id','image_path','annotated','weather','time','in_out','last_modified']
+        with open('annotation.csv','w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(header_list)
+            for idx, item in enumerate(self.filepaths):
+                writer.writerow([idx, item, False, '', '', '', ''])
+
+    def saveMetadataToCSV(self):
+        if not self.filepaths:
+            self.warnMsgDialog('You must import dataset.')
+            return
+        new_row_data = [self.nowIndex, self.filepaths[self.nowIndex], True,
+                        self.wthr, self.time, self.door, datetime.now().strftime("%Y%m%d%H%M")]
+        with open('example.csv', 'r') as csvfile:
+            reader = csv.reader(csvfile)
+            rows = list(reader)
+        rows[self.nowIndex+1] = new_row_data
+        with open('annotation.csv','w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(rows)
+
+    @staticmethod
+    def warnMsgDialog(msg):
+        msgBox = QMessageBox()
+        msgBox.setWindowTitle('Something Went Wrong')
+        msgBox.setTextFormat(Qt.RichText)
+        msgBox.setText(msg)
+        msgBox.exec()
+
     @staticmethod
     def getAllImageFilePath(folder_path:str) -> (list, list):
         filepaths, filenames = [], []
@@ -58,32 +101,28 @@ class Annotator(QWidget):
                     filenames.append(file)
         return filepaths, filenames
 
-    @staticmethod
-    def createGroup(title:str, btnNameList:list, btnGroup, w:int, h:int):
+    def createGroup(self, title:str, btnNameList:list, btnGroup, w:int, h:int):
         vbox = QVBoxLayout()
         btnGroup.setExclusive(True)
         groupbox = QGroupBox(title)
         groupbox.setLayout(vbox)
         groupbox.setFixedSize(w, h)
         for idx, item in enumerate(btnNameList):
+            if self.timeStampList == btnNameList: idx += 10
+            if self.inoutList == btnNameList: idx += 20
             title = item.replace('_', ' ').title() if item != 'etc' else 'ETC'
             btn = QRadioButton(title)
             btnGroup.addButton(btn, idx)
             vbox.addWidget(btn, alignment=Qt.AlignLeading)
-        # btnGroup.buttonClicked[int].connect(self.btnClicked)
+        btnGroup.buttonClicked[int].connect(self.btnClicked)
         return groupbox
 
-    @staticmethod
-    def extraDialog():
-        msgBox = QMessageBox()
-        msgBox.setWindowTitle("Hello Out There")
-        msgBox.setTextFormat(Qt.RichText)
+    def extraDialog(self):
         msg = "¯\\_(ツ)_/¯ \
                 <br> Copyright (c) 2023 Junggyun Oh. All rights reserved. \
                 <br> Please Report Bug and Additional Requirements Here. And Give Me Star. \
                 <br> => <a href='https://github.com/Dodant/image-metadata-annotator'>Dodant/image-metadata-annotator</a>"
-        msgBox.setText(msg)
-        msgBox.exec()
+        self.warnMsgDialog(msg)
 
     def changeImageAndInfo(self):
         self.fname = self.filenames[self.nowIndex]
@@ -92,44 +131,31 @@ class Annotator(QWidget):
         self.checkAnnotated()
         self.fileNumName.setText(f'File : #{self.nowIndex + 1}  ||  Current File Name : {self.fname}')
 
-    def folderOpen(self):
-        self.filepaths, self.filenames = self.getAllImageFilePath(self.folderInput.text())
-        if not self.filepaths:
-            msgBox = QMessageBox()
-            msgBox.setWindowTitle('Something Went Wrong')
-            msgBox.setTextFormat(Qt.RichText)
-            msgBox.setText('No Image. <br> Check the Directory Paths Once More.')
-            msgBox.exec()
-            return
-        self.ok_checkbtn.setChecked(True)
-        self.nowIndex = 0
-        self.initMetadataCSV()
-        self.changeImageAndInfo()
-
     def checkAnnotated(self):
         msg = f'No. of Images : {len(self.filepaths)}  '
         msg += f'||  No. of Annotated File : {self.numberOfAnnotated}  '
         msg += f'||  Is Annotated? : {"Y" if self.isAnnotated else "N"}'
         self.numberOfImageLabel.setText(msg)
 
-    def saveMetadataToCSV(self):
-        new_row_data = [self.nowIndex, self.filepaths[self.nowIndex], False, '', '', '', '']
-        with open('example.csv', 'r') as csvfile:
-            reader = csv.reader(csvfile)
-            rows = list(reader)
-        rows[self.nowIndex+1] = new_row_data
-        with open('annotation.csv','w', newline='') as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow(rows)
+    def btnClicked(self, btn):
+        if not self.filepaths:
+            self.warnMsgDialog('You must import dataset.')
+            return
+        grp, idx = divmod(btn, 10)
+        if grp == 0: self.wthr = self.wthrCndtList[idx]
+        if grp == 1: self.time = self.timeStampList[idx]
+        if grp == 2: self.door = self.inoutList[idx]
 
-    def initMetadataCSV(self):
-        if os.path.exists(os.path.join('self.folderInput.text()', 'annotation.csv')): pass
-        header_list = ['id','image_path','annotated','weather','time','in_out','last_modified']
-        with open('annotation.csv','w', newline='') as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow(header_list)
-            for idx, item in enumerate(self.filepaths):
-                writer.writerow([idx, item, False, '', '', '', ''])
+    def goToImage(self):
+        if not self.filepaths: return
+        sender = self.sender()
+        if sender.text() == '<<< << <':
+            self.nowIndex -= 1
+            if self.nowIndex < 0: self.nowIndex = len(self.filepaths) - 1
+        elif sender.text() == '> >> >>>':
+            self.nowIndex += 1
+            if self.nowIndex >= len(self.filepaths): self.nowIndex = 0
+        self.changeImageAndInfo()
 
     def initUI(self):
         self.folderInput.setFixedWidth(350)
@@ -139,7 +165,7 @@ class Annotator(QWidget):
 
         savebtn = QPushButton('Save Metadata', self)
         savebtn.setFixedWidth(150)
-        # savebtn.clicked.connect(self.saveMetadataToCSV)
+        savebtn.clicked.connect(self.saveMetadataToCSV)
 
         extraBtn = QPushButton('Hello Out There', self)
         extraBtn.clicked.connect(self.extraDialog)
@@ -218,17 +244,6 @@ class Annotator(QWidget):
         cp = QDesktopWidget().availableGeometry().center()
         qr.moveCenter(cp)
         self.move(qr.topLeft())
-
-    def goToImage(self):
-        if not self.filepaths: return
-        sender = self.sender()
-        if sender.text() == '<<< << <':
-            self.nowIndex -= 1
-            if self.nowIndex < 0: self.nowIndex = len(self.filepaths) - 1
-        elif sender.text() == '> >> >>>':
-            self.nowIndex += 1
-            if self.nowIndex >= len(self.filepaths): self.nowIndex = 0
-        self.changeImageAndInfo()
 
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_A: self.goToImage()
