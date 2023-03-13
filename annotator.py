@@ -64,8 +64,8 @@ class Annotator(QWidget):
 
     def initMetadataCSV(self):
         if os.path.exists(os.path.join(self.folderInput.text(), 'annotation.csv')): pass
-        for idx, item in enumerate(self.filenames):
-            item = os.path.join(self.folderInput.text().split('/')[-1], item)
+        for idx, item in enumerate(self.filepaths):
+            item = os.path.join(*item.split('/')[item.split('/').index(self.folderInput.text().split('/')[-1]):])
             self.csvRows.append([idx, item, 'N', '', '', '', 0])
         with open('annotation.csv','w', newline='') as csvfile:
             writer = csv.writer(csvfile)
