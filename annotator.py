@@ -70,7 +70,11 @@ class Annotator(QWidget):
                 writer.writerow([idx, item, False, '', '', '', ''])
 
     def goToRecentAnnotatedImage(self):
-        pass
+        with open('annotation.csv', 'r', newline='') as csvfile: rows = list(csv.reader(csvfile))
+        temp = []
+        for i in rows[1:]: temp.append(int(i[-1]) if i[-1] else 0)
+        self.nowIndex = max(range(len(temp)), key=lambda j: temp[j])
+        self.changeImageAndInfo()
 
     def saveMetadataToCSV(self):
         if not self.filepaths:
@@ -151,15 +155,14 @@ class Annotator(QWidget):
         if grp == 1: self.time = self.timeStampList[idx]
         if grp == 2: self.door = self.inoutList[idx]
 
-    def goToImage(self):
-        if not self.filepaths: return
-        sender = self.sender()
-        if sender.text() == '<<< << <':
-            self.nowIndex -= 1
-            if self.nowIndex < 0: self.nowIndex = len(self.filepaths) - 1
-        elif sender.text() == '> >> >>>':
-            self.nowIndex += 1
-            if self.nowIndex >= len(self.filepaths): self.nowIndex = 0
+    def goToPrevImage(self):
+        self.nowIndex -= 1
+        if self.nowIndex < 0: self.nowIndex = len(self.filepaths) - 1
+        self.changeImageAndInfo()
+
+    def goToNextImage(self):
+        self.nowIndex += 1
+        if self.nowIndex >= len(self.filepaths): self.nowIndex = 0
         self.changeImageAndInfo()
 
     def initUI(self):
@@ -181,8 +184,8 @@ class Annotator(QWidget):
         prevBtn = QPushButton('<<< << <', self)
         nextBtn = QPushButton('> >> >>>', self)
         recentBtn = QPushButton('Jump to Recently Annotated Image')
-        prevBtn.clicked.connect(self.goToImage)
-        nextBtn.clicked.connect(self.goToImage)
+        prevBtn.clicked.connect(self.goToPrevImage)
+        nextBtn.clicked.connect(self.goToNextImage)
         recentBtn.clicked.connect(self.goToRecentAnnotatedImage)
 
         fhbox = QHBoxLayout()
@@ -252,8 +255,8 @@ class Annotator(QWidget):
         self.move(qr.topLeft())
 
     def keyPressEvent(self, e):
-        if e.key() == Qt.Key_A: self.goToImage()
-        if e.key() == Qt.Key_D: self.goToImage()
+        if e.key() == Qt.Key_A: self.goToPrevImage()
+        if e.key() == Qt.Key_D: self.goToNextImage()
         if e.key() in [Qt.Key_Enter, Qt.Key_S]: pass
 
 
