@@ -31,8 +31,7 @@ class Annotator(QWidget):
 
         self.folderlabel = QLabel(f'Dataset Folder :', self)
         self.folderInput = QLineEdit(self)
-        self.ok_checkbtn = QCheckBox('OK', self)
-        self.info_checkbtn = QCheckBox('Metadata Exists', self)
+        self.ok_checkbtn = QCheckBox('Integrity Check', self)
         self.numberOfImageLabel = QLabel('No. of Images : _  ||  No. of Annotated File : _  ||  Is Annotated? : _')
         self.isAnnotatedLbl = QLabel('Annotated')
         self.fileNumName = QLabel(f'File : #_  ||  Current File Name : {self.fname}')
@@ -156,36 +155,33 @@ class Annotator(QWidget):
         if grp == 1: self.time = self.timeStampList[idx]
         if grp == 2: self.door = self.inoutList[idx]
 
-    def goToPrevImage(self):
-        self.nowIndex -= 1
-        if self.nowIndex < 0: self.nowIndex = len(self.filepaths) - 1
-        self.changeImageAndInfo()
-
+    def checkedBtnManage(self):
         if self.csvRows[self.nowIndex][2] == 'Y':
-            pass
+            self.wthrCndtBtnGroup.button(self.wthrCndtList.index(self.csvRows[self.nowIndex][3])).setChecked(True)
+            self.timeStampBtnGroup.button(self.timeStampList.index(self.csvRows[self.nowIndex][4])+10).setChecked(True)
+            self.inOutBtnGroup.button(self.inoutList.index(self.csvRows[self.nowIndex][5])+20).setChecked(True)
         else:
             bgList = [self.wthrCndtBtnGroup, self.timeStampBtnGroup, self.inOutBtnGroup]
             for bg in bgList:
                 bg.setExclusive(False)
                 for btn in bg.buttons(): btn.setChecked(False)
+                bg.setExclusive(True)
+
+    def goToPrevImage(self):
+        self.nowIndex -= 1
+        if self.nowIndex < 0: self.nowIndex = len(self.filepaths) - 1
+        self.changeImageAndInfo()
+        self.checkedBtnManage()
 
     def goToNextImage(self):
         self.nowIndex += 1
         if self.nowIndex >= len(self.filepaths): self.nowIndex = 0
         self.changeImageAndInfo()
-
-        if self.csvRows[self.nowIndex][2] == 'Y':
-            pass
-        else:
-            bgList = [self.wthrCndtBtnGroup, self.timeStampBtnGroup, self.inOutBtnGroup]
-            for bg in bgList:
-                bg.setExclusive(False)
-                for btn in bg.buttons(): btn.setChecked(False)
+        self.checkedBtnManage()
 
     def initUI(self):
         self.folderInput.setFixedWidth(350)
         self.ok_checkbtn.setEnabled(False)
-        self.info_checkbtn.setEnabled(False)
         self.numberOfImageLabel.setAlignment(Qt.AlignCenter)
 
         savebtn = QPushButton('Save Metadata', self)
@@ -217,7 +213,6 @@ class Annotator(QWidget):
         mbbox.addWidget(self.numberOfImageLabel, alignment=Qt.AlignCenter)
         mbbox.addStretch(1)
         mbbox.addWidget(self.ok_checkbtn, alignment=Qt.AlignCenter)
-        mbbox.addWidget(self.info_checkbtn, alignment=Qt.AlignCenter)
         mbbox.addStretch(1)
 
         mhbox = QHBoxLayout()
