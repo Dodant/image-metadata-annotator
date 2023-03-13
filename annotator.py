@@ -75,6 +75,7 @@ class Annotator(QWidget):
     def goToRecentAnnotatedImage(self):
         self.nowIndex = np.argmax([i[-1] for i in self.csvRows])
         self.changeImageAndInfo()
+        self.
 
     def saveMetadataToCSV(self):
         if not self.filepaths:
@@ -143,7 +144,7 @@ class Annotator(QWidget):
     def checkAnnotated(self):
         msg = f'No. of Images : {len(self.filepaths)}  '
         msg += f'||  No. of Annotated File : {len([i for i in self.csvRows if i[2] == "Y"])}  '
-        msg += f'||  Is Annotated? : {self.csvRows[self.nowIndex][2]}'
+        msg += f'||  Is It Annotated? : {self.csvRows[self.nowIndex][2]}'
         self.numberOfImageLabel.setText(msg)
 
     def btnClicked(self, btn):
@@ -184,7 +185,7 @@ class Annotator(QWidget):
         self.ok_checkbtn.setEnabled(False)
         self.numberOfImageLabel.setAlignment(Qt.AlignCenter)
 
-        savebtn = QPushButton('Save Metadata', self)
+        savebtn = QPushButton('Save Metadata (S)', self)
         savebtn.setFixedWidth(150)
         savebtn.clicked.connect(self.saveMetadataToCSV)
 
@@ -194,8 +195,8 @@ class Annotator(QWidget):
         folderSelectBtn = QPushButton('Click', self)
         folderSelectBtn.clicked.connect(self.folderOpen)
 
-        prevBtn = QPushButton('<<< << <', self)
-        nextBtn = QPushButton('> >> >>>', self)
+        prevBtn = QPushButton('<<< << < (A)', self)
+        nextBtn = QPushButton('(D) > >> >>>', self)
         recentBtn = QPushButton('Jump to Recently Annotated Image')
         prevBtn.clicked.connect(self.goToPrevImage)
         nextBtn.clicked.connect(self.goToNextImage)
