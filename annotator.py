@@ -11,6 +11,7 @@ import sys
 import csv
 from datetime import datetime
 
+import numpy as np
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, QRadioButton, QGroupBox, QHBoxLayout, QVBoxLayout, \
@@ -42,6 +43,9 @@ class Annotator(QWidget):
         self.wthrCndtList = ['clear', 'clouds', 'rain', 'foggy', 'thunder', 'overcast', 'extra_sunny', 'etc']
         self.timeStampList = ['dawn', 'morning_to_day', 'evening', 'night', 'etc']
         self.inoutList = ['indoor', 'outdoor', 'etc']
+        self.headerList = ['id','image_path','annotated','weather','time','in_out','last_modified']
+        self.extensions = ['.jpg', '.jpeg', '.png', '.gif', '.svg', '.tif', '.tiff']
+        self.csvRows = []
 
         self.wthrCndtBtnGroup = QButtonGroup()
         self.timeStampBtnGroup = QButtonGroup()
@@ -50,7 +54,7 @@ class Annotator(QWidget):
         self.initUI()
 
     def folderOpen(self):
-        self.filepaths, self.filenames = self.getAllImageFilePath(self.folderInput.text())
+        self.filepaths, self.filenames = self.getAllImageFilePath(self.extensions, self.folderInput.text())
         if not self.filepaths:
             self.warnMsgDialog('No Image. <br> Check the Directory Paths Once More.')
             return
@@ -61,19 +65,16 @@ class Annotator(QWidget):
 
     def initMetadataCSV(self):
         if os.path.exists(os.path.join(self.folderInput.text(), 'annotation.csv')): pass
-        header_list = ['id','image_path','annotated','weather','time','in_out','last_modified']
+        for idx, item in enumerate(self.filenames):
+            item = os.path.join(self.folderInput.text().split('/')[-1], item)
+            self.csvRows.append([idx, item, 'N', '', '', '', 0])
         with open('annotation.csv','w', newline='') as csvfile:
             writer = csv.writer(csvfile)
-            writer.writerow(header_list)
-            for idx, item in enumerate(self.filenames):
-                item = os.path.join(self.folderInput.text().split('/')[-1], item)
-                writer.writerow([idx, item, False, '', '', '', ''])
+            writer.writerow(self.headerList)
+            writer.writerows(self.csvRows)
 
     def goToRecentAnnotatedImage(self):
-        with open('annotation.csv', 'r', newline='') as csvfile: rows = list(csv.reader(csvfile))
-        temp = []
-        for i in rows[1:]: temp.append(int(i[-1]) if i[-1] else 0)
-        self.nowIndex = max(range(len(temp)), key=lambda j: temp[j])
+        self.nowIndex = np.argmax([i[-1] for i in self.csvRows])
         self.changeImageAndInfo()
 
     def saveMetadataToCSV(self):
@@ -81,15 +82,16 @@ class Annotator(QWidget):
             self.warnMsgDialog('You must import dataset.')
             return
         item = os.path.join(self.folderInput.text().split('/')[-1], self.filenames[self.nowIndex])
-        new_row_data = [self.nowIndex, item, True,
-                        self.wthr, self.time, self.door, datetime.now().strftime("%Y%m%d%H%M%S")]
+        new_row_data = [self.nowIndex, item, 'Y',
+                        self.wthr, self.time, self.door, int(datetime.now().strftime("%Y%m%d%H%M%S"))]
         with open('annotation.csv', 'r', newline='') as csvfile:
-            reader = csv.reader(csvfile)
-            rows = list(reader)
-        rows[self.nowIndex+1] = new_row_data
+            self.csvRows = list(csv.reader(csvfile))[1:]
+        self.csvRows[self.nowIndex] = new_row_data
         with open('annotation.csv', 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
-            writer.writerows(rows)
+            writer.writerow(self.headerList)
+            writer.writerows(self.csvRows)
+        self.checkAnnotated()
 
     @staticmethod
     def warnMsgDialog(msg):
@@ -100,9 +102,8 @@ class Annotator(QWidget):
         msgBox.exec()
 
     @staticmethod
-    def getAllImageFilePath(folder_path:str) -> (list, list):
+    def getAllImageFilePath(extensions, folder_path:str) -> (list, list):
         filepaths, filenames = [], []
-        extensions = ['.jpg', '.jpeg', '.png', '.gif', '.svg', '.tif', '.tiff']
         for path, dirs, files in os.walk(folder_path):
             for file in files:
                 if os.path.splitext(file)[1].lower() in extensions:
@@ -142,8 +143,8 @@ class Annotator(QWidget):
 
     def checkAnnotated(self):
         msg = f'No. of Images : {len(self.filepaths)}  '
-        msg += f'||  No. of Annotated File : {self.numberOfAnnotated}  '
-        msg += f'||  Is Annotated? : {"Y" if self.isAnnotated else "N"}'
+        msg += f'||  No. of Annotated File : {len([i for i in self.csvRows if i[2] == "Y"])}  '
+        msg += f'||  Is Annotated? : {self.csvRows[self.nowIndex][2]}'
         self.numberOfImageLabel.setText(msg)
 
     def btnClicked(self, btn):
@@ -160,10 +161,26 @@ class Annotator(QWidget):
         if self.nowIndex < 0: self.nowIndex = len(self.filepaths) - 1
         self.changeImageAndInfo()
 
+        if self.csvRows[self.nowIndex][2] == 'Y':
+            pass
+        else:
+            bgList = [self.wthrCndtBtnGroup, self.timeStampBtnGroup, self.inOutBtnGroup]
+            for bg in bgList:
+                bg.setExclusive(False)
+                for btn in bg.buttons(): btn.setChecked(False)
+
     def goToNextImage(self):
         self.nowIndex += 1
         if self.nowIndex >= len(self.filepaths): self.nowIndex = 0
         self.changeImageAndInfo()
+
+        if self.csvRows[self.nowIndex][2] == 'Y':
+            pass
+        else:
+            bgList = [self.wthrCndtBtnGroup, self.timeStampBtnGroup, self.inOutBtnGroup]
+            for bg in bgList:
+                bg.setExclusive(False)
+                for btn in bg.buttons(): btn.setChecked(False)
 
     def initUI(self):
         self.folderInput.setFixedWidth(350)
@@ -257,7 +274,7 @@ class Annotator(QWidget):
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_A: self.goToPrevImage()
         if e.key() == Qt.Key_D: self.goToNextImage()
-        if e.key() in [Qt.Key_Enter, Qt.Key_S]: pass
+        if e.key() in [Qt.Key_Enter, Qt.Key_S]: self.saveMetadataToCSV()
 
 
 if __name__ == '__main__':
