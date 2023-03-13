@@ -75,7 +75,7 @@ class Annotator(QWidget):
     def goToRecentAnnotatedImage(self):
         self.nowIndex = np.argmax([i[-1] for i in self.csvRows])
         self.changeImageAndInfo()
-        self.
+        self.checkedBtnManage()
 
     def saveMetadataToCSV(self):
         if not self.filepaths:
