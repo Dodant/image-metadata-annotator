@@ -65,22 +65,27 @@ class Annotator(QWidget):
         with open('annotation.csv','w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(header_list)
-            for idx, item in enumerate(self.filepaths):
+            for idx, item in enumerate(self.filenames):
+                item = os.path.join(self.folderInput.text().split('/')[-1], item)
                 writer.writerow([idx, item, False, '', '', '', ''])
+
+    def goToRecentAnnotatedImage(self):
+        pass
 
     def saveMetadataToCSV(self):
         if not self.filepaths:
             self.warnMsgDialog('You must import dataset.')
             return
-        new_row_data = [self.nowIndex, self.filepaths[self.nowIndex], True,
-                        self.wthr, self.time, self.door, datetime.now().strftime("%Y%m%d%H%M")]
-        with open('example.csv', 'r') as csvfile:
+        item = os.path.join(self.folderInput.text().split('/')[-1], self.filenames[self.nowIndex])
+        new_row_data = [self.nowIndex, item, True,
+                        self.wthr, self.time, self.door, datetime.now().strftime("%Y%m%d%H%M%S")]
+        with open('annotation.csv', 'r', newline='') as csvfile:
             reader = csv.reader(csvfile)
             rows = list(reader)
         rows[self.nowIndex+1] = new_row_data
-        with open('annotation.csv','w', newline='') as csvfile:
+        with open('annotation.csv', 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
-            writer.writerow(rows)
+            writer.writerows(rows)
 
     @staticmethod
     def warnMsgDialog(msg):
@@ -178,6 +183,7 @@ class Annotator(QWidget):
         recentBtn = QPushButton('Jump to Recently Annotated Image')
         prevBtn.clicked.connect(self.goToImage)
         nextBtn.clicked.connect(self.goToImage)
+        recentBtn.clicked.connect(self.goToRecentAnnotatedImage)
 
         fhbox = QHBoxLayout()
         fhbox.addStretch(1)
