@@ -7,8 +7,10 @@
 #
 
 import os
+import os.path as pth
 import sys
 import csv
+import platform
 from datetime import datetime
 
 import numpy as np
@@ -28,6 +30,7 @@ class Annotator(QWidget):
         self.numberOfAnnotated: int = 0
         self.isAnnotated: bool = False
         self.wthr, self.time, self.door, self.motion, self.illu = '', '', '', '', ''
+        self.currentOS = platform.system()
 
         self.folderlabel = QLabel(f'Dataset Folder :', self)
         self.folderInput = QLineEdit(self)
@@ -49,11 +52,11 @@ class Annotator(QWidget):
         self.extensions = ['.jpg', '.jpeg', '.png', '.gif', '.svg', '.tif', '.tiff']
         self.csvRows = []
 
-        self.wthrCndtBtnGroup = QButtonGroup()
-        self.timeStampBtnGroup = QButtonGroup()
-        self.inOutBtnGroup = QButtonGroup()
-        self.motionBtnGroup = QButtonGroup()
-        self.illuBtnGroup = QButtonGroup()
+        self.wthrCndtBtnGrp = QButtonGroup()
+        self.timeStampBtnGrp = QButtonGroup()
+        self.inOutBtnGrp = QButtonGroup()
+        self.motionBtnGrp = QButtonGroup()
+        self.illuBtnGrp = QButtonGroup()
 
         self.initUI()
 
@@ -66,11 +69,15 @@ class Annotator(QWidget):
         self.nowIndex = 0
         self.initMetadataCSV()
         self.changeImageAndInfo()
+        self.checkedBtnManage()
 
     def initMetadataCSV(self):
-        if os.path.exists(os.path.join(self.folderInput.text(), 'annotation.csv')): pass
+        if pth.exists(pth.join(self.folderInput.text(), 'annotation.csv')):
+            with open('annotation.csv', 'r', newline='') as csvfile:
+                self.csvRows = list(csv.reader(csvfile))[1:]
+            return
         for idx, item in enumerate(self.filepaths):
-            item = os.path.join(*item.split('/')[item.split('/').index(self.folderInput.text().split('/')[-1]):])
+            item = pth.join(*item.split(pth.sep)[item.split(pth.sep).index(pth.basename(self.folderInput.text())):])
             self.csvRows.append([idx, item, 'N', '', '', '', '', '', 0])
         with open('annotation.csv', 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
@@ -86,13 +93,13 @@ class Annotator(QWidget):
         if not self.filepaths:
             self.warnMsgDialog('You must import dataset.')
             return
-        if self.wthrCndtBtnGroup.checkedId() == -1 or self.timeStampBtnGroup.checkedId() == -1 or \
-                self.inOutBtnGroup.checkedId() == -1 or self.motionBtnGroup.checkedId() == -1 or \
-                self.illuBtnGroup.checkedId() == -1:
+        if self.wthrCndtBtnGrp.checkedId() == -1 or self.timeStampBtnGrp.checkedId() == -1 or \
+                self.inOutBtnGrp.checkedId() == -1 or self.motionBtnGrp.checkedId() == -1 or \
+                self.illuBtnGrp.checkedId() == -1:
             self.warnMsgDialog('You have to check all groups')
             return
-
-        item = os.path.join(self.folderInput.text().split('/')[-1], self.filenames[self.nowIndex])
+        item = self.filepaths[self.nowIndex]
+        item = pth.join(*item.split(pth.sep)[item.split(pth.sep).index(pth.basename(self.folderInput.text())):])
         new_row_data = [self.nowIndex, item, 'Y', self.wthr, self.time, self.door,
                         self.motion, self.illu, int(datetime.now().strftime("%Y%m%d%H%M%S"))]
         with open('annotation.csv', 'r', newline='') as csvfile:
@@ -117,8 +124,8 @@ class Annotator(QWidget):
         filepaths, filenames = [], []
         for path, dirs, files in os.walk(folder_path):
             for file in files:
-                if os.path.splitext(file)[1].lower() in extensions:
-                    filepaths.append(os.path.join(path, file))
+                if pth.splitext(file)[1].lower() in extensions:
+                    filepaths.append(pth.join(path, file))
                     filenames.append(file)
         return filepaths, filenames
 
@@ -130,9 +137,9 @@ class Annotator(QWidget):
         groupbox.setFixedSize(w, h)
         for id, item in enumerate(btnNameList):
             if self.timeStampList == btnNameList: id += 10
-            if self.inoutList == btnNameList: id += 20
-            if self.motionList == btnNameList: id += 30
-            if self.illuList == btnNameList: id += 40
+            if self.inoutList == btnNameList:     id += 20
+            if self.motionList == btnNameList:    id += 30
+            if self.illuList == btnNameList:      id += 40
             title = item.replace('_', ' ').title() if item != 'etc' else 'ETC'
             btn = QRadioButton(title)
             btnGroup.addButton(btn, id)
@@ -173,19 +180,20 @@ class Annotator(QWidget):
             if idx == 0:
                 self.door = self.inoutList[idx]
                 self.time = self.timeStampList[-1]
-                self.timeStampBtnGroup.button(14).setChecked(True)
+                self.timeStampBtnGrp.button(14).setChecked(True)
+            self.door = self.inoutList[idx]
         if grp == 3: self.motion = self.motionList[idx]
         if grp == 4: self.illu = self.illuList[idx]
 
     def checkedBtnManage(self):
+        bgList = [self.wthrCndtBtnGrp, self.timeStampBtnGrp, self.inOutBtnGrp, self.motionBtnGrp, self.illuBtnGrp]
         if self.csvRows[self.nowIndex][2] == 'Y':
-            self.wthrCndtBtnGroup.button(self.wthrCndtList.index(self.csvRows[self.nowIndex][3])).setChecked(True)
-            self.timeStampBtnGroup.button(self.timeStampList.index(self.csvRows[self.nowIndex][4]) + 10).setChecked(True)
-            self.inOutBtnGroup.button(self.inoutList.index(self.csvRows[self.nowIndex][5]) + 20).setChecked(True)
-            self.motionBtnGroup.button(self.motionList.index(self.csvRows[self.nowIndex][6]) + 30).setChecked(True)
-            self.illuBtnGroup.button(self.illuList.index(self.csvRows[self.nowIndex][7]) + 40).setChecked(True)
+            self.wthrCndtBtnGrp.button(self.wthrCndtList.index(self.csvRows[self.nowIndex][3])).setChecked(True)
+            self.timeStampBtnGrp.button(self.timeStampList.index(self.csvRows[self.nowIndex][4])+10).setChecked(True)
+            self.inOutBtnGrp.button(self.inoutList.index(self.csvRows[self.nowIndex][5])+20).setChecked(True)
+            self.motionBtnGrp.button(self.motionList.index(self.csvRows[self.nowIndex][6])+30).setChecked(True)
+            self.illuBtnGrp.button(self.illuList.index(self.csvRows[self.nowIndex][7])+40).setChecked(True)
         else:
-            bgList = [self.wthrCndtBtnGroup, self.timeStampBtnGroup, self.inOutBtnGroup, self.motionBtnGroup, self.illuBtnGroup]
             for bg in bgList:
                 bg.setExclusive(False)
                 for btn in bg.buttons(): btn.setChecked(False)
@@ -246,21 +254,22 @@ class Annotator(QWidget):
         mhbox.addStretch(1)
         mhbox.addWidget(recentBtn, alignment=Qt.AlignCenter)
 
+        width = 170
         checkgroupbox = QVBoxLayout()
         checkgroupbox.addWidget(
-            self.createGroup('Weather Conditions', self.wthrCndtList, self.wthrCndtBtnGroup, 150, 230),
+            self.createGroup('Weather Conditions', self.wthrCndtList, self.wthrCndtBtnGrp, width, 230),
             alignment=Qt.AlignCenter)
         checkgroupbox.addWidget(
-            self.createGroup('Time Stamp', self.timeStampList, self.timeStampBtnGroup, 150, 160),
+            self.createGroup('Time Stamp', self.timeStampList, self.timeStampBtnGrp, width, 160),
             alignment=Qt.AlignCenter)
         checkgroupbox.addWidget(
-            self.createGroup('Indoor / Outdoor', self.inoutList, self.inOutBtnGroup, 150, 100),
+            self.createGroup('Indoor / Outdoor', self.inoutList, self.inOutBtnGrp, width, 100),
             alignment=Qt.AlignCenter)
         checkgroupbox.addWidget(
-            self.createGroup('Motion Blur', self.motionList, self.motionBtnGroup, 150, 80),
+            self.createGroup('Motion Blur', self.motionList, self.motionBtnGrp, width, 80),
             alignment=Qt.AlignCenter)
         checkgroupbox.addWidget(
-            self.createGroup('Illuminance', self.illuList, self.illuBtnGroup, 150, 100),
+            self.createGroup('Illuminance', self.illuList, self.illuBtnGrp, width, 110),
             alignment=Qt.AlignCenter)
         checkgroupbox.addWidget(savebtn, alignment=Qt.AlignCenter)
         checkgroupbox.addStretch(1)
