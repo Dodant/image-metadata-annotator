@@ -267,22 +267,14 @@ class Annotator(QWidget):
         mhbox.addStretch(1)
         mhbox.addWidget(recentBtn, alignment=Qt.AlignCenter)
 
+        gls = ['Weather Conditions', 'Time Stamp', 'Indoor / Outdoor', 'Motion Blur', 'Illuminance']
+        lls = [self.wthrCndtList, self.timeStampList, self.inoutList, self.motionList, self.illuList]
+        rls = [self.wthrCndtBtnGrp, self.timeStampBtnGrp, self.inOutBtnGrp, self.motionBtnGrp, self.illuBtnGrp]
+        hls = [240, 160, 100, 80, 110]
+
         checkgroupbox = QVBoxLayout()
-        checkgroupbox.addWidget(
-            self.createGroup('Weather Conditions', self.wthrCndtList, self.wthrCndtBtnGrp, width, 240),
-            alignment=Qt.AlignCenter)
-        checkgroupbox.addWidget(
-            self.createGroup('Time Stamp', self.timeStampList, self.timeStampBtnGrp, width, 160),
-            alignment=Qt.AlignCenter)
-        checkgroupbox.addWidget(
-            self.createGroup('Indoor / Outdoor', self.inoutList, self.inOutBtnGrp, width, 100),
-            alignment=Qt.AlignCenter)
-        checkgroupbox.addWidget(
-            self.createGroup('Motion Blur', self.motionList, self.motionBtnGrp, width, 80),
-            alignment=Qt.AlignCenter)
-        checkgroupbox.addWidget(
-            self.createGroup('Illuminance', self.illuList, self.illuBtnGrp, width, 110),
-            alignment=Qt.AlignCenter)
+        for g, l, r, h in zip(gls, lls, rls, hls):
+            checkgroupbox.addWidget(self.createGroup(g, l, r, width, h), alignment=Qt.AlignCenter)
         checkgroupbox.addWidget(savebtn, alignment=Qt.AlignCenter)
         checkgroupbox.addStretch(1)
 
