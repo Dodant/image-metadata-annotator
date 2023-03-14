@@ -228,8 +228,9 @@ class Annotator(QWidget):
         self.ok_checkbtn.setEnabled(False)
         self.numberOfImageLabel.setAlignment(Qt.AlignCenter)
 
+        width = 180
         savebtn = QPushButton('Save Metadata (S)', self)
-        savebtn.setFixedWidth(150)
+        savebtn.setFixedWidth(width)
         savebtn.clicked.connect(self.saveMetadataToCSV)
 
         extraBtn = QPushButton('Hello Out There', self)
@@ -266,10 +267,9 @@ class Annotator(QWidget):
         mhbox.addStretch(1)
         mhbox.addWidget(recentBtn, alignment=Qt.AlignCenter)
 
-        width = 170
         checkgroupbox = QVBoxLayout()
         checkgroupbox.addWidget(
-            self.createGroup('Weather Conditions', self.wthrCndtList, self.wthrCndtBtnGrp, width, 230),
+            self.createGroup('Weather Conditions', self.wthrCndtList, self.wthrCndtBtnGrp, width, 240),
             alignment=Qt.AlignCenter)
         checkgroupbox.addWidget(
             self.createGroup('Time Stamp', self.timeStampList, self.timeStampBtnGrp, width, 160),
