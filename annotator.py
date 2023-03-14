@@ -23,18 +23,17 @@ from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, QRadioButton,
 class Annotator(QWidget):
     def __init__(self):
         super().__init__()
-        self.fname: str = '_'
-        self.filepaths: list = []
-        self.filenames: list = []
+        self.fname: str = ''
+        self.dbpath, self.anpath = '', ''
+        self.filepaths, self.filenames = [], []
+        self.numOfImage = 0
         self.nowIndex: int = 0
-        self.numberOfAnnotated: int = 0
-        self.isAnnotated: bool = False
         self.wthr, self.time, self.door, self.motion, self.illu = '', '', '', '', ''
-        self.currentOS = platform.system()
 
         self.folderlabel = QLabel(f'Dataset Folder :', self)
         self.folderInput = QLineEdit(self)
         self.ok_checkbtn = QCheckBox('Integrity Check', self)
+
         self.numberOfImageLabel = QLabel('Num of Annotated / Images : _ / _ ||  Is It Annotated? : _')
         self.isAnnotatedLbl = QLabel('Annotated')
         self.fileNumName = QLabel(f'File : #_  ||  Current File Name : {self.fname}')
@@ -61,26 +60,32 @@ class Annotator(QWidget):
         self.initUI()
 
     def folderOpen(self):
-        self.filepaths, self.filenames = self.getAllImageFilePath(self.extensions, self.folderInput.text())
+        self.dbpath = self.folderInput.text()
+        self.anpath = pth.join(self.dbpath, 'annotation.csv')
+        self.filepaths, self.filenames = self.getAllImageFilePath(self.extensions, self.dbpath)
+        self.numOfImage = len(self.filepaths)
+
         if not self.filepaths:
             self.warnMsgDialog('No Image. <br> Check the Directory Paths Once More.')
             return
+        
         self.ok_checkbtn.setChecked(True)
-        self.nowIndex = 0
         self.initMetadataCSV()
         self.changeImageAndInfo()
         self.checkedBtnManage()
 
     def initMetadataCSV(self):
-        if pth.exists(pth.join(self.folderInput.text(), 'annotation.csv')):
-            with open('annotation.csv', 'r', newline='') as csvfile:
-                self.csvRows = list(csv.reader(csvfile))[1:]
+        if pth.exists(self.anpath):
+            with open(self.anpath, 'r', newline='') as f:
+                self.csvRows = list(csv.reader(f))[1:]
             return
+        
         for idx, item in enumerate(self.filepaths):
-            item = pth.join(*item.split(pth.sep)[item.split(pth.sep).index(pth.basename(self.folderInput.text())):])
+            item = pth.join(*item.split(pth.sep)[item.split(pth.sep).index(pth.basename(self.dbpath)):])
             self.csvRows.append([idx, item, 'N', '', '', '', '', '', 0])
-        with open('annotation.csv', 'w', newline='') as csvfile:
-            writer = csv.writer(csvfile)
+            
+        with open(self.anpath, 'w', newline='') as f:
+            writer = csv.writer(f)
             writer.writerow(self.headerList)
             writer.writerows(self.csvRows)
 
@@ -93,20 +98,23 @@ class Annotator(QWidget):
         if not self.filepaths:
             self.warnMsgDialog('You must import dataset.')
             return
+
         if self.wthrCndtBtnGrp.checkedId() == -1 or self.timeStampBtnGrp.checkedId() == -1 or \
                 self.inOutBtnGrp.checkedId() == -1 or self.motionBtnGrp.checkedId() == -1 or \
                 self.illuBtnGrp.checkedId() == -1:
             self.warnMsgDialog('You have to check all groups')
             return
+
         item = self.filepaths[self.nowIndex]
         item = pth.join(*item.split(pth.sep)[item.split(pth.sep).index(pth.basename(self.folderInput.text())):])
+
+        with open(self.anpath, 'r', newline='') as f: self.csvRows = list(csv.reader(f))[1:]
         new_row_data = [self.nowIndex, item, 'Y', self.wthr, self.time, self.door,
-                        self.motion, self.illu, int(datetime.now().strftime("%Y%m%d%H%M%S"))]
-        with open('annotation.csv', 'r', newline='') as csvfile:
-            self.csvRows = list(csv.reader(csvfile))[1:]
+                        self.motion, self.illu, int(datetime.now().strftime('%Y%m%d%H%M%S'))]
         self.csvRows[self.nowIndex] = new_row_data
-        with open('annotation.csv', 'w', newline='') as csvfile:
-            writer = csv.writer(csvfile)
+
+        with open(self.anpath, 'w', newline='') as f:
+            writer = csv.writer(f)
             writer.writerow(self.headerList)
             writer.writerows(self.csvRows)
         self.checkAnnotated()
@@ -131,19 +139,22 @@ class Annotator(QWidget):
 
     def createGroup(self, title: str, btnNameList: list, btnGroup, w: int, h: int):
         vbox = QVBoxLayout()
-        btnGroup.setExclusive(True)
         groupbox = QGroupBox(title)
         groupbox.setLayout(vbox)
         groupbox.setFixedSize(w, h)
+
         for id, item in enumerate(btnNameList):
             if self.timeStampList == btnNameList: id += 10
-            if self.inoutList == btnNameList:     id += 20
-            if self.motionList == btnNameList:    id += 30
-            if self.illuList == btnNameList:      id += 40
-            title = item.replace('_', ' ').title() if item != 'etc' else 'ETC'
+            if self.inoutList == btnNameList: id += 20
+            if self.motionList == btnNameList: id += 30
+            if self.illuList == btnNameList: id += 40
+
+            title = item.replace('_', ' ').title() if item != 'etc' else item.upper()
             btn = QRadioButton(title)
             btnGroup.addButton(btn, id)
             vbox.addWidget(btn, alignment=Qt.AlignLeading)
+
+        btnGroup.setExclusive(True)
         btnGroup.buttonClicked[int].connect(self.btnClicked)
         return groupbox
 
@@ -159,10 +170,10 @@ class Annotator(QWidget):
         self.pixmap = QPixmap(self.filepaths[self.nowIndex]).scaled(1000, 750)
         self.lbl_img.setPixmap(self.pixmap)
         self.checkAnnotated()
-        self.fileNumName.setText(f'File : #{self.nowIndex + 1}  ||  Current File Name : {self.fname}')
+        self.fileNumName.setText(f'File : #{self.nowIndex + 1} / {self.numOfImage}  ||  Current File Name : {self.fname}')
 
     def checkAnnotated(self):
-        msg = f'Num of Annotated / Images : {len([i for i in self.csvRows if i[2] == "Y"])} / {len(self.filepaths)}  '
+        msg = f'Num of Annotated / Images : {len([i for i in self.csvRows if i[2] == "Y"])} / {self.numOfImage}  '
         if self.csvRows[self.nowIndex][2] == 'Y':
             msg += '||  Is It Annotated? : < span style = "color:blue;" >Y</span>'
         else:
@@ -173,6 +184,7 @@ class Annotator(QWidget):
         if not self.filepaths:
             self.warnMsgDialog('You must import dataset.')
             return
+
         grp, idx = divmod(btn, 10)
         if grp == 0: self.wthr = self.wthrCndtList[idx]
         if grp == 1: self.time = self.timeStampList[idx]
@@ -201,13 +213,13 @@ class Annotator(QWidget):
 
     def goToPrevImage(self):
         self.nowIndex -= 1
-        if self.nowIndex < 0: self.nowIndex = len(self.filepaths) - 1
+        if self.nowIndex < 0: self.nowIndex = self.numOfImage - 1
         self.changeImageAndInfo()
         self.checkedBtnManage()
 
     def goToNextImage(self):
         self.nowIndex += 1
-        if self.nowIndex >= len(self.filepaths): self.nowIndex = 0
+        if self.nowIndex >= self.numOfImage: self.nowIndex = 0
         self.changeImageAndInfo()
         self.checkedBtnManage()
 
