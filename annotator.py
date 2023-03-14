@@ -41,19 +41,19 @@ class Annotator(QWidget):
         self.pixmap = QPixmap()
         self.lbl_img = QLabel()
 
+        self.inoutList = ['indoor', 'outdoor', 'etc']
         self.wthrCndtList = ['clear', 'clouds', 'rain', 'foggy', 'thunder', 'overcast', 'extra_sunny', 'etc']
         self.timeStampList = ['dawn', 'morning_to_day', 'evening', 'night', 'etc']
-        self.inoutList = ['indoor', 'outdoor', 'etc']
         self.motionList = ['o', 'x']
         self.illuList = ['bright', 'dim', 'dark']
-        self.headerList = ['id', 'image_path', 'annotated',
-                           'weather', 'time', 'in_out', 'motion_blur', 'illuminance', 'last_modified']
+        self.headerList = ['id', 'image_path', 'annotated', 'in_out',
+                           'weather', 'time', 'motion_blur', 'illuminance', 'last_modified']
         self.extensions = ['.jpg', '.jpeg', '.png', '.gif', '.svg', '.tif', '.tiff']
         self.csvRows = []
 
+        self.inOutBtnGrp = QButtonGroup()
         self.wthrCndtBtnGrp = QButtonGroup()
         self.timeStampBtnGrp = QButtonGroup()
-        self.inOutBtnGrp = QButtonGroup()
         self.motionBtnGrp = QButtonGroup()
         self.illuBtnGrp = QButtonGroup()
 
@@ -109,7 +109,7 @@ class Annotator(QWidget):
         item = pth.join(*item.split(pth.sep)[item.split(pth.sep).index(pth.basename(self.folderInput.text())):])
 
         with open(self.anpath, 'r', newline='') as f: self.csvRows = list(csv.reader(f))[1:]
-        new_row_data = [self.nowIndex, item, 'Y', self.wthr, self.time, self.door,
+        new_row_data = [self.nowIndex, item, 'Y', self.door, self.wthr, self.time,
                         self.motion, self.illu, int(datetime.now().strftime('%Y%m%d%H%M%S'))]
         self.csvRows[self.nowIndex] = new_row_data
 
@@ -144,8 +144,8 @@ class Annotator(QWidget):
         groupbox.setFixedSize(w, h)
 
         for id, item in enumerate(btnNameList):
-            if self.timeStampList == btnNameList: id += 10
-            if self.inoutList == btnNameList: id += 20
+            if self.wthrCndtList == btnNameList: id += 10
+            if self.timeStampList == btnNameList: id += 20
             if self.motionList == btnNameList: id += 30
             if self.illuList == btnNameList: id += 40
 
@@ -175,9 +175,9 @@ class Annotator(QWidget):
     def checkAnnotated(self):
         msg = f'Num of Annotated / Images : {len([i for i in self.csvRows if i[2] == "Y"])} / {self.numOfImage}  '
         if self.csvRows[self.nowIndex][2] == 'Y':
-            msg += '||  Is It Annotated? : < span style = "color:blue;" >Y</span>'
+            msg += '||  Is It Annotated? : <b><span style = "color:blue;">Y</span></b>'
         else:
-            msg += '||  Is It Annotated? : < span style = "color:red;" >N</span>'
+            msg += '||  Is It Annotated? : <b><span style = "color:red;">N</span></b>'
         self.numberOfImageLabel.setText(msg)
 
     def btnClicked(self, btn):
@@ -186,23 +186,26 @@ class Annotator(QWidget):
             return
 
         grp, idx = divmod(btn, 10)
-        if grp == 0: self.wthr = self.wthrCndtList[idx]
-        if grp == 1: self.time = self.timeStampList[idx]
-        if grp == 2:
+        if grp == 0:
             if idx == 0:
                 self.door = self.inoutList[idx]
                 self.time = self.timeStampList[-1]
-                self.timeStampBtnGrp.button(14).setChecked(True)
-            self.door = self.inoutList[idx]
+                self.wthr = self.wthrCndtList[-1]
+                self.wthrCndtBtnGrp.button(17).setChecked(True)
+                self.timeStampBtnGrp.button(24).setChecked(True)
+            else:
+                self.door = self.inoutList[idx]
+        if grp == 1: self.wthr = self.wthrCndtList[idx]
+        if grp == 2: self.time = self.timeStampList[idx]
         if grp == 3: self.motion = self.motionList[idx]
         if grp == 4: self.illu = self.illuList[idx]
 
     def checkedBtnManage(self):
-        bgList = [self.wthrCndtBtnGrp, self.timeStampBtnGrp, self.inOutBtnGrp, self.motionBtnGrp, self.illuBtnGrp]
+        bgList = [self.inOutBtnGrp, self.wthrCndtBtnGrp, self.timeStampBtnGrp, self.motionBtnGrp, self.illuBtnGrp]
         if self.csvRows[self.nowIndex][2] == 'Y':
-            self.wthrCndtBtnGrp.button(self.wthrCndtList.index(self.csvRows[self.nowIndex][3])).setChecked(True)
-            self.timeStampBtnGrp.button(self.timeStampList.index(self.csvRows[self.nowIndex][4])+10).setChecked(True)
-            self.inOutBtnGrp.button(self.inoutList.index(self.csvRows[self.nowIndex][5])+20).setChecked(True)
+            self.inOutBtnGrp.button(self.inoutList.index(self.csvRows[self.nowIndex][3])).setChecked(True)
+            self.wthrCndtBtnGrp.button(self.wthrCndtList.index(self.csvRows[self.nowIndex][4])+10).setChecked(True)
+            self.timeStampBtnGrp.button(self.timeStampList.index(self.csvRows[self.nowIndex][5])+20).setChecked(True)
             self.motionBtnGrp.button(self.motionList.index(self.csvRows[self.nowIndex][6])+30).setChecked(True)
             self.illuBtnGrp.button(self.illuList.index(self.csvRows[self.nowIndex][7])+40).setChecked(True)
         else:
@@ -267,10 +270,10 @@ class Annotator(QWidget):
         mhbox.addStretch(1)
         mhbox.addWidget(recentBtn, alignment=Qt.AlignCenter)
 
-        gls = ['Weather Conditions', 'Time Stamp', 'Indoor / Outdoor', 'Motion Blur', 'Illuminance']
-        lls = [self.wthrCndtList, self.timeStampList, self.inoutList, self.motionList, self.illuList]
-        rls = [self.wthrCndtBtnGrp, self.timeStampBtnGrp, self.inOutBtnGrp, self.motionBtnGrp, self.illuBtnGrp]
-        hls = [240, 160, 100, 80, 110]
+        gls = ['Indoor / Outdoor', 'Weather Conditions', 'Time Stamp', 'Motion Blur', 'Illuminance']
+        lls = [self.inoutList, self.wthrCndtList, self.timeStampList, self.motionList, self.illuList]
+        rls = [self.inOutBtnGrp, self.wthrCndtBtnGrp, self.timeStampBtnGrp, self.motionBtnGrp, self.illuBtnGrp]
+        hls = [100, 240, 160, 80, 110]
 
         checkgroupbox = QVBoxLayout()
         for g, l, r, h in zip(gls, lls, rls, hls):
