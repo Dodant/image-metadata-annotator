@@ -30,13 +30,14 @@ class Annotator(QWidget):
         self.nowIndex: int = 0
         self.wthr, self.time, self.door, self.motion, self.illu = '', '', '', '', ''
 
-        self.folderlabel = QLabel(f'Dataset Folder :', self)
+        self.folderlabel = QLabel('Dataset Folder :', self)
         self.folderInput = QLineEdit(self)
         self.ok_checkbtn = QCheckBox('Integrity Check', self)
+        self.folderSelectBtn = QPushButton('Click', self)
 
-        self.numberOfImageLabel = QLabel('Num of Annotated / Images : _ / _ ||  Is It Annotated? : _')
+        self.numberOfImageLabel = QLabel('You should copy & paste your folder path like below.')
         self.isAnnotatedLbl = QLabel('Annotated')
-        self.fileNumName = QLabel(f'File : #_  ||  Current File Name : {self.fname}')
+        self.fileNumName = QLabel('EX) /home/username/Downloads/datasets')
 
         self.pixmap = QPixmap()
         self.lbl_img = QLabel()
@@ -70,6 +71,7 @@ class Annotator(QWidget):
             return
         
         self.ok_checkbtn.setChecked(True)
+        self.ok_checkbtn.setEnabled(False)
         self.initMetadataCSV()
         self.changeImageAndInfo()
         self.checkedBtnManage()
@@ -167,17 +169,16 @@ class Annotator(QWidget):
 
     def changeImageAndInfo(self):
         self.fname = self.filenames[self.nowIndex]
-        self.pixmap = QPixmap(self.filepaths[self.nowIndex]).scaled(1000, 750)
+        self.pixmap = QPixmap(self.filepaths[self.nowIndex]).scaled(1280, 720)
         self.lbl_img.setPixmap(self.pixmap)
         self.checkAnnotated()
-        self.fileNumName.setText(f'File : #{self.nowIndex + 1} / {self.numOfImage}  ||  Current File Name : {self.fname}')
+        self.fileNumName.setText(f'File : #{self.nowIndex + 1} / {self.numOfImage:<15}Name : {self.fname}')
 
     def checkAnnotated(self):
-        msg = f'Num of Annotated / Images : {len([i for i in self.csvRows if i[2] == "Y"])} / {self.numOfImage}  '
-        if self.csvRows[self.nowIndex][2] == 'Y':
-            msg += '||  Is It Annotated? : <b><span style = "color:blue;">Y</span></b>'
-        else:
-            msg += '||  Is It Annotated? : <b><span style = "color:red;">N</span></b>'
+        annotated = len([i for i in self.csvRows if i[2] == 'Y'])
+        anno_chck = self.csvRows[self.nowIndex][2]
+        msg = f'Num of Annotated / Images : {annotated} / {self.numOfImage}{"&nbsp;"*12}Is It Annotated? : '
+        msg += f'<b><span style = "color:{"blue" if anno_chck == "Y" else "red"}">{anno_chck}</span></b>'
         self.numberOfImageLabel.setText(msg)
 
     def btnClicked(self, btn):
@@ -230,6 +231,7 @@ class Annotator(QWidget):
         self.folderInput.setFixedWidth(350)
         self.ok_checkbtn.setEnabled(False)
         self.numberOfImageLabel.setAlignment(Qt.AlignCenter)
+        self.folderSelectBtn.clicked.connect(self.folderOpen)
 
         width = 180
         savebtn = QPushButton('Save Metadata (S)', self)
@@ -238,9 +240,6 @@ class Annotator(QWidget):
 
         extraBtn = QPushButton('Hello Out There', self)
         extraBtn.clicked.connect(self.extraDialog)
-
-        folderSelectBtn = QPushButton('Click', self)
-        folderSelectBtn.clicked.connect(self.folderOpen)
 
         prevBtn = QPushButton('<<< << < (A)', self)
         nextBtn = QPushButton('(D) > >> >>>', self)
@@ -253,7 +252,7 @@ class Annotator(QWidget):
         fhbox.addStretch(1)
         fhbox.addWidget(self.folderlabel, alignment=Qt.AlignCenter)
         fhbox.addWidget(self.folderInput, alignment=Qt.AlignCenter)
-        fhbox.addWidget(folderSelectBtn, alignment=Qt.AlignCenter)
+        fhbox.addWidget(self.folderSelectBtn, alignment=Qt.AlignCenter)
         fhbox.addStretch(1)
 
         mbbox = QHBoxLayout()
@@ -315,7 +314,9 @@ class Annotator(QWidget):
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_A: self.goToPrevImage()
         if e.key() == Qt.Key_D: self.goToNextImage()
-        if e.key() in [Qt.Key_Enter, Qt.Key_S]: self.saveMetadataToCSV()
+        if e.key() == Qt.Key_S: self.saveMetadataToCSV()
+        if e.key() == Qt.Key_E: self.goToRecentAnnotatedImage()
+        if e.key() == Qt.Key_Return: self.folderOpen()
 
 
 if __name__ == '__main__':
